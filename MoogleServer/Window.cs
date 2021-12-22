@@ -15,22 +15,15 @@
  * along with Moogle!. If not, see <http://www.gnu.org/licenses/>.
  *
  */
+using GtkChild = Gtk.Builder.ObjectAttribute;
 
-namespace Moogle.Engine
+namespace Moogle.Server
 {
-  public class SearchItem
+  [GLib.TypeName("MoogleServerWindow")]
+  [Gtk.Template (ResourceName = "Window.ui")]
+  public class Window : Gtk.Window
   {
-    public SearchItem(string title, string snippet, float score)
-    {
-      this.Title = title;
-      this.Snippet = snippet;
-      this.Score = score;
-    }
-
-    public string Title { get; private set; }
-
-    public string Snippet { get; private set; }
-
-    public float Score { get; private set; }
+    public Window() : this(new Gtk.TemplateBuilder()) {}
+    public Window(Gtk.TemplateBuilder builder) : base(null) => builder.InitTemplate(this);
   }
 }

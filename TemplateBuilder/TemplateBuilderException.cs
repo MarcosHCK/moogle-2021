@@ -16,21 +16,16 @@
  *
  */
 
-namespace Moogle.Engine
+namespace Gtk
 {
-  public class SearchItem
+  [System.Serializable]
+  public class TemplateBuilderException : System.Exception
   {
-    public SearchItem(string title, string snippet, float score)
-    {
-      this.Title = title;
-      this.Snippet = snippet;
-      this.Score = score;
-    }
-
-    public string Title { get; private set; }
-
-    public string Snippet { get; private set; }
-
-    public float Score { get; private set; }
+    public TemplateBuilderException() { }
+    public TemplateBuilderException(string message) : base(message) { }
+    public TemplateBuilderException(string message, System.Exception inner) : base(message, inner) { }
+    protected TemplateBuilderException(
+      System.Runtime.Serialization.SerializationInfo info,
+      System.Runtime.Serialization.StreamingContext context) : base(info, context) { }
   }
 }

@@ -3,11 +3,25 @@
   <ItemGroup>
     <ProjectReference Include="..\MoogleEngine\MoogleEngine.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\TemplateBuilder\TemplateBuilder.csproj" />
+  </ItemGroup>
 
   <PropertyGroup>
     <TargetFramework>net6.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
+
+  <ItemGroup>
+    <None Remove="**\Resources\UI\*.ui" />
+    <EmbeddedResource Include="**\Resources\UI\*.ui">
+      <LogicalName>%(Filename)%(Extension)</LogicalName>
+    </EmbeddedResource>
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="GtkSharp" Version="3.24.24.*" />
+  </ItemGroup>
 
 </Project>

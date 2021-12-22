@@ -16,21 +16,17 @@
  *
  */
 
-namespace Moogle.Engine
+namespace Gtk
 {
-  public class SearchItem
+  [System.AttributeUsage (System.AttributeTargets.Class, Inherited = false, AllowMultiple = false)]
+  public sealed class TemplateAttribute : System.Attribute
   {
-    public SearchItem(string title, string snippet, float score)
+    public string ResourceName {get; set;}
+    public static string INVALID = "__invalid__id__";
+
+    public TemplateAttribute()
     {
-      this.Title = title;
-      this.Snippet = snippet;
-      this.Score = score;
+      ResourceName = INVALID;
     }
-
-    public string Title { get; private set; }
-
-    public string Snippet { get; private set; }
-
-    public float Score { get; private set; }
   }
 }
