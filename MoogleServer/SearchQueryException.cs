@@ -16,15 +16,15 @@
  *
  */
 
-namespace Gtk
+namespace Moogle.Server
 {
   [System.Serializable]
-  public sealed class TemplateBuilderException : System.Exception
+  public sealed class SearchQueryException : System.Exception
   {
-    public TemplateBuilderException() { }
-    public TemplateBuilderException(string message) : base(message) { }
-    public TemplateBuilderException(string message, System.Exception inner) : base(message, inner) { }
-    private TemplateBuilderException(
+    public SearchQueryException() { }
+    public SearchQueryException(string message) : base(message) { }
+    public SearchQueryException(string message, System.Exception inner) : base(message, inner) { }
+    private SearchQueryException(
       System.Runtime.Serialization.SerializationInfo info,
       System.Runtime.Serialization.StreamingContext context) : base(info, context) { }
   }

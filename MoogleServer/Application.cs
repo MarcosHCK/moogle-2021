@@ -20,6 +20,9 @@ namespace Moogle.Server
 {
   public class Application : Gtk.Application, GLib.IInitable
   {
+    public static string ApplicationName = "Moogle!";
+    public static string ApplicationVersion = "1.0.0.0";
+    public static string ApplicationWebsite = "https://github.com/MarcosHCK/moogle-2021/";
 
     /*
     * Virtuals
@@ -76,7 +79,7 @@ namespace Moogle.Server
     public static int Main(string[] argv)
     {
       var app = new Moogle.Server.Application("org.hck.moogle", GLib.ApplicationFlags.None);
-    return app.Run(null, argv);
+    return app.Run(ApplicationName, argv);
     }
   }
 }

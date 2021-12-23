@@ -20,7 +20,7 @@ using System.Text;
 
 namespace Gtk
 {
-  public class TemplateBuilder
+  public sealed class TemplateBuilder
   {
     public void InitTemplate(Gtk.Widget instance)
     {
@@ -43,6 +43,7 @@ namespace Gtk
               stream.Read(bytes, 0, bytes.Length);
               var code = Encoding.UTF8.GetString(bytes);
               builder.ExtendWithTemplate(instance, g_type, code);
+              builder.Autoconnect(instance);
             }
             else
             {

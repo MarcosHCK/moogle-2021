@@ -16,14 +16,118 @@
  *
  */
 using GtkChild = Gtk.Builder.ObjectAttribute;
+using Moogle.Engine;
 
 namespace Moogle.Server
 {
   [GLib.TypeName("MoogleServerWindow")]
   [Gtk.Template (ResourceName = "Window.ui")]
-  public class Window : Gtk.Window
+  public partial class Window : Gtk.Window
   {
-    public Window() : this(new Gtk.TemplateBuilder()) {}
-    public Window(Gtk.TemplateBuilder builder) : base(null) => builder.InitTemplate(this);
+    private Gtk.Dialog? About = null;
+    private SearchQuery query;
+
+    /*
+     * Template childs
+     *
+     */
+
+    [GtkChild]
+    private Gtk.ListBox? listbox1;
+    [GtkChild]
+    private Gtk.SearchBar? searchbar1;
+    [GtkChild]
+    private Gtk.SearchEntry? searchentry1;
+    [GtkChild]
+    private Gtk.EntryCompletion? entrycompletion1;
+
+    /*
+     * Signals
+     *
+     */
+
+    private void OnSearchCompleted(SearchResult result)
+    {
+      foreach (var child in listbox1!.Children)
+      {
+        child.Destroy();
+      }
+
+      foreach (var item in result.Items())
+      {
+        var entry = new SearchEntry(item.Title, item.Snippet);
+        listbox1!.Add(entry);
+        entry.Show();
+      }
+    }
+
+    private void OnSearchChanged(System.Object button, System.EventArgs args)
+    {
+      var text = searchentry1!.Text;
+      if (text != "")
+      {
+        query.Start(text);
+      }
+    }
+
+    private void OnSearchStop(System.Object button, System.EventArgs args)
+    {
+      searchbar1!.SearchModeEnabled = false;
+      query.Stop();
+    }
+
+    private void OnKeyPressEvent(System.Object window, Gtk.KeyPressEventArgs args) => args.RetVal = searchbar1!.HandleEvent(args.Event);
+    private void OnShowSearch(System.Object button, System.EventArgs args) => searchbar1!.SearchModeEnabled = true;
+
+    private void OnAbout(System.Object button, System.EventArgs args)
+    {
+      if(About == null)
+      {
+        var about = new Gtk.AboutDialog();
+        About = about as Gtk.Dialog;
+        about.TransientFor = this;
+
+        about.Title = $"About {Server.Application.ApplicationName}";
+        about.Artists = new string[] {"MarcosHCK"};
+        about.Authors = new string[] {"MarcosHCK"};
+        about.Copyright = "Copyright 2021-2025 MarcosHCK";
+        about.Documenters = new string[] {"MarcosHCK"};
+        about.License = "GNU GPLv3.0";
+        about.LicenseType = Gtk.License.Gpl30;
+        about.ProgramName = Server.Application.ApplicationName;
+        about.TranslatorCredits = "translator-credits";
+        about.Version = Server.Application.ApplicationVersion;
+        about.Website = Server.Application.ApplicationWebsite;
+        about.WebsiteLabel = "Github page";
+        about.WrapLicense = true;
+
+        about.DeleteEvent +=
+        (Gtk.DeleteEventHandler)
+        ((widget, args) =>
+        {
+          ((Gtk.Widget) widget).Hide();
+          args.RetVal = false;
+        });
+      }
+
+      About.Run();
+      About.Hide();
+    }
+
+    private void OnQuit(System.Object button, System.EventArgs args) => this.Destroy();
+
+  /*
+   * Constructors
+   *
+   */
+
+    public Window() : this(false) {}
+    private Window(bool re) : base(null)
+    {
+      (new Gtk.TemplateBuilder()).InitTemplate(this);
+      this.query = new SearchQuery();
+      this.query.Completed += OnSearchCompleted;
+      this.KeyPressEvent += OnKeyPressEvent;
+    }
   }
 }
