@@ -15,26 +15,47 @@
  * along with Moogle!. If not, see <http://www.gnu.org/licenses/>.
  *
  */
+using System.Collections;
 
 namespace Moogle.Engine
 {
   public abstract class Document
   {
+#region Variables
+
     public string Etag {get; set;}
     protected string InvalidEtag = "";
     public GLib.IFile Source {get; set;}
+    protected Hashtable words = new Hashtable();
+    protected decimal globalCount;
 
-    /*
-     * Abstracts
-     *
-     */
+    protected class Counter
+    {
+      public decimal count = 1;
+    }
+
+#endregion
+
+#region Abstracts
 
     public abstract void UdpdateTfImplementation(GLib.InputStream stream, GLib.Cancellable? cancellable = null);
 
-    /*
-     * API
-     *
-     */
+#endregion
+
+#region Internal API
+
+    protected void CalculateTf()
+    {
+      foreach (var word in words.Keys)
+      {
+        var counter = ((Counter)words[word]!);
+        counter.count /= globalCount;
+      }
+    }
+
+#endregion
+
+#region API
 
     public void UdpdateTf(GLib.Cancellable? cancellable = null)
     {
@@ -55,15 +76,16 @@ namespace Moogle.Engine
       }
     }
 
-    /*
-     * Constructors
-     *
-     */
+#endregion
+
+#region Constructors
 
     public Document(GLib.IFile source)
     {
       this.Source = source;
       this.Etag = InvalidEtag;
     }
+
+#endregion
   }
 }

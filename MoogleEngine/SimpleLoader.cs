@@ -15,55 +15,132 @@
  * along with Moogle!. If not, see <http://www.gnu.org/licenses/>.
  *
  */
+using System.Text.RegularExpressions;
+using System.Text;
 
 namespace Moogle.Engine
 {
   [DocumentLoader.MimeType (MimeType = "text/plain")]
-  public sealed class SimpleLoader : DocumentLoader
+  public class PlainLoader : DocumentLoader
   {
-    private class SimpleDocument : Document
+    protected class PlainDocument : Document
     {
-      public byte[] buffer = new byte[128];
+#region Variables
 
-      public override void UdpdateTfImplementation(GLib.InputStream stream, GLib.Cancellable? cancellable = null)
+      private static Regex word_pattern = new Regex("\\w+", RegexOptions.Compiled | RegexOptions.Singleline);
+      private static int bufferSize = 1024;
+      private StringBuilder builder = new StringBuilder();
+      private char[] buffer = new char[64];
+
+#endregion
+
+#region Document loading
+
+      private void EmitPartial(string partial)
       {
-        lock (buffer)
+        lock (word_pattern)
         {
-          long read = 0;
-
-          do
+          var match =
+          word_pattern.Match(partial);
+          if (match.Success)
           {
-            try
+            do
             {
-              read =
-              stream.Read(buffer, (ulong) buffer.Length, cancellable);
-              if (read == buffer.Length)
+              if (match.Success)
               {
-              }
-            }
-            catch(GLib.GException e)
-            {
-              if(e.Domain == GLib.GioGlobal.ErrorQuark()
-                && e.Code == (int) GLib.IOErrorEnum.Cancelled)
-              {
-                return;
+                var word = match.Value;
+                if (words.ContainsKey(word))
+                  ((Counter) words[word]!).count++;
+                else
+                  words[word] = new Counter();
+                globalCount++;
               }
               else
               {
-                throw;
+                break;
               }
             }
+            while ((match = match.NextMatch()) != null);
           }
-          while (read != 0);
         }
       }
 
-      public SimpleDocument(GLib.IFile source) : base(source) {}
+      private void EmitBlock(char[] block, int read)
+      {
+        bool cr = false;
+        for (int i = 0; i < read; i++)
+        {
+          var c = block[i];
+          switch (c)
+          {
+            case '\r':
+              cr = true;
+              break;
+            case '\n':
+              cr = false;
+              EmitPartial(builder.ToString());
+              builder.Clear();
+              break;
+            case '\x20':
+              EmitPartial(builder.ToString());
+              builder.Clear();
+              break;
+            default:
+              if (cr == true)
+              {
+                EmitPartial(builder.ToString());
+                builder.Clear();
+                cr = false;
+              }
+
+              builder.Append(c);
+              break;
+          }
+        }
+      }
+
+      public override void UdpdateTfImplementation(GLib.InputStream stream, GLib.Cancellable? cancellable = null)
+      {
+        var reader = new StreamReader(new GLib.GioStream(stream), null, true, bufferSize, true);
+        globalCount = 0;
+        builder.Clear();
+        words.Clear();
+        int read;
+
+        do
+        {
+          read =
+          reader.ReadBlock(buffer, 0, buffer.Length);
+          if (read > 0)
+          {
+            EmitBlock(buffer, read);
+            if (cancellable != null
+              && cancellable.IsCancelled)
+              return;
+          }
+          else
+          {
+            buffer[0] = '\n';
+            EmitBlock(buffer, 1);
+            break;
+          }
+        }
+        while (true);
+        CalculateTf();
+      }
+
+#endregion
+
+#region Constructors
+
+      public PlainDocument(GLib.IFile source) : base(source) {}
+
+#endregion
     }
 
     protected override Document LoadImplementation(GLib.IFile file, string MimeType, GLib.Cancellable? cancellable = null)
     {
-      return new SimpleDocument(file);
+      return new PlainDocument(file);
     }
   }
 }
