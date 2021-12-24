@@ -20,12 +20,25 @@ using Moogle.Engine;
 
 namespace Moogle.Server
 {
-  public class SearchQuery
+  public class SearchQuery : GLib.Object
   {
-    public Task? task = null;
-    public CancellationTokenSource source;
+    private Task? task = null;
+    private CancellationTokenSource source;
+    private Moogle.Engine.SearchEngine engine;
+
+    /*
+     * Events
+     *
+     */
+
     public delegate void CompletedHandler(SearchResult result);
+    [GLib.Signal("completed")]
     public event CompletedHandler? Completed;
+
+    /*
+     * API
+     *
+     */
 
     public void Start(string tag)
     {
@@ -42,11 +55,20 @@ namespace Moogle.Server
               try
               {
                 await Task.Delay(10, token);
-                var result = Moogle.Engine.Moogle.Query(tag);
+                SearchResult result;
+                lock (engine)
+                {
+                  result = this.engine.Query(tag);
+                }
+
                 token.ThrowIfCancellationRequested();
                 if (Completed != null)
                 {
-                  Completed(result);
+                  GLib.Idle.Add(() =>
+                  {
+                    Completed(result);
+                    return false;
+                  });
                 }
               }
               catch (OperationCanceledException)
@@ -94,9 +116,15 @@ namespace Moogle.Server
       }
     }
 
+    /*
+     * Constructors
+     *
+     */
+
     public SearchQuery()
     {
       this.source = new CancellationTokenSource();
+      this.engine = new Moogle.Engine.SearchEngine("../Content/");
     }
   }
 }

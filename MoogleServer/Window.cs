@@ -16,6 +16,7 @@
  *
  */
 using GtkChild = Gtk.Builder.ObjectAttribute;
+using System.Collections;
 using Moogle.Engine;
 
 namespace Moogle.Server
@@ -50,6 +51,7 @@ namespace Moogle.Server
     {
       foreach (var child in listbox1!.Children)
       {
+        listbox1!.Remove(child);
         child.Destroy();
       }
 
@@ -61,7 +63,7 @@ namespace Moogle.Server
       }
     }
 
-    private void OnSearchChanged(System.Object button, System.EventArgs args)
+    private void OnSearchChanged(object? widget, System.EventArgs args)
     {
       var text = searchentry1!.Text;
       if (text != "")
@@ -70,16 +72,17 @@ namespace Moogle.Server
       }
     }
 
-    private void OnSearchStop(System.Object button, System.EventArgs args)
+    private void OnSearchStop(object? widget, System.EventArgs args)
     {
       searchbar1!.SearchModeEnabled = false;
       query.Stop();
     }
 
-    private void OnKeyPressEvent(System.Object window, Gtk.KeyPressEventArgs args) => args.RetVal = searchbar1!.HandleEvent(args.Event);
-    private void OnShowSearch(System.Object button, System.EventArgs args) => searchbar1!.SearchModeEnabled = true;
+    private void OnKeyPressEvent(object? widget, Gtk.KeyPressEventArgs args) => args.RetVal = searchbar1!.HandleEvent(args.Event);
+    private void OnFocusOutEvent(object? widget, Gtk.FocusOutEventArgs args) => searchbar1!.SearchModeEnabled = false;
+    private void OnShowSearch(object? widget, System.EventArgs args) => searchbar1!.SearchModeEnabled = true;
 
-    private void OnAbout(System.Object button, System.EventArgs args)
+    private void OnAbout(object? widget, System.EventArgs args)
     {
       if(About == null)
       {
@@ -128,6 +131,8 @@ namespace Moogle.Server
       this.query = new SearchQuery();
       this.query.Completed += OnSearchCompleted;
       this.KeyPressEvent += OnKeyPressEvent;
+      searchentry1!.FocusOutEvent += OnFocusOutEvent;
+      searchbar1!.FocusOutEvent += OnFocusOutEvent;
     }
   }
 }
