@@ -15,20 +15,15 @@
  * along with Moogle!. If not, see <http://www.gnu.org/licenses/>.
  *
  */
-using System.Collections;
 using System.Threading;
 
 namespace Moogle.Engine
 {
   public class SearchEngine
   {
+#region Variables
     public string Source {get; private set;}
-    public Hashtable documents = new Hashtable();
-
-    /*
-     * Nested types
-     *
-     */
+    private Corpus corpus = new Corpus();
 
     [System.Serializable]
     public sealed class SearchEngineException : System.Exception
@@ -41,44 +36,9 @@ namespace Moogle.Engine
         System.Runtime.Serialization.StreamingContext context) : base(info, context) { }
     }
 
-    public class DocumentEntry
-    {
-      public Document? document = null;
-      private bool Looked = false;
+#endregion
 
-      public void Mark() => this.Looked = true;
-      public void Unmark() => this.Looked = false;
-      public bool IsMarked() => this.Looked == true;
-    }
-
-    /*
-     * Workers
-     *
-     */
-
-    private void UpdateFile(GLib.IFile file, GLib.FileInfo info, GLib.Cancellable? cancellable = null)
-    {
-      var entry = (DocumentEntry?) documents[file.ParsedName];
-      if (entry == null)
-      {
-        var document = DocumentLoader.Load(file, info.ContentType, cancellable);
-        if (document != null)
-        {
-          var entry_ = new DocumentEntry();
-          entry_.document = document;
-          documents.Add(file.ParsedName, entry_);
-          entry_.Mark();
-        }
-
-        if (cancellable != null
-          && cancellable.IsCancelled)
-          return;
-      }
-      else
-      {
-        ((DocumentEntry) entry).Mark();
-      }
-    }
+#region Workers
 
     private void ScanDirectory(GLib.IFile directory, GLib.Cancellable? cancellable = null)
     {
@@ -92,7 +52,7 @@ namespace Moogle.Engine
           ScanDirectory(directory.GetChild(info.Name), cancellable);
           break;
         case GLib.FileType.Regular:
-          UpdateFile(directory.GetChild(info.Name), info, cancellable);
+          corpus.Add(directory.GetChild(info.Name), info, cancellable);
           break;
         }
 
@@ -104,13 +64,7 @@ namespace Moogle.Engine
 
     private void UpdateDocumentList(GLib.Cancellable? cancellable = null)
     {
-      /* Unmark all documents */
-      foreach (DocumentEntry doc in documents.Values)
-      {
-        doc.Unmark();
-      }
-
-      /* Load main source directory */
+      /* Scan source directory */
 #region Directory loading
       GLib.IFile? file = null;
 
@@ -126,44 +80,11 @@ namespace Moogle.Engine
           && cancellable.IsCancelled)
         return;
 #endregion
-
-      /* If document has wasn't marked means it was deleted */
-      do
-      {
-        string? remove = null;
-        foreach (DictionaryEntry entry in documents)
-        {
-          var doc = (DocumentEntry) entry.Value!;
-          if (doc.IsMarked() == false)
-          {
-            remove = (string) entry.Key;
-            break;
-          }
-        }
-
-        if (remove != null)
-          documents.Remove(remove);
-        else
-          break;
-      }
-      while (true);
     }
 
-    private void UpdateDocumentTf(GLib.Cancellable? cancellable = null)
-    {
-      foreach (DocumentEntry doc in documents.Values)
-      {
-        doc.document!.UdpdateTf(cancellable);
-        if (cancellable != null
-          && cancellable.IsCancelled)
-          return;
-      }
-    }
+#endregion
 
-    /*
-     * API
-     *
-     */
+#region API
 
     public SearchResult Query(string query)
     {
@@ -176,24 +97,24 @@ namespace Moogle.Engine
       UpdateDocumentList(cancellable);
       token.ThrowIfCancellationRequested();
       /* reload documents which had been modified */
-      UpdateDocumentTf(cancellable);
+      corpus.Update();
       token.ThrowIfCancellationRequested();
 
-      SearchItem[] items = new SearchItem[3] {
-            new SearchItem("Hello World", "Lorem ipsum dolor sit amet", 0.9f),
-            new SearchItem("Hello World", "Lorem ipsum dolor sit amet", 0.5f),
-            new SearchItem("Hello World", "Lorem ipsum dolor sit amet", 0.1f),
-        };
-
+      /* Perform a word search */
+      var list = corpus.SearchItems(query);
+      var items = new SearchItem[list.Count];
+      int i = 0;
+      foreach (var item in list)
+        items[i++] = item;
       return new SearchResult(items, query);
     }
 
-    /*
-     * Constructors
-     *
-     */
+#endregion
+
+#region Constructors
 
     public SearchEngine() : this(".") {}
     public SearchEngine(string source) => this.Source = source;
+#endregion
   }
 }

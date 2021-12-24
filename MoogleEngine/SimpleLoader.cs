@@ -99,7 +99,7 @@ namespace Moogle.Engine
         }
       }
 
-      public override void UdpdateTfImplementation(GLib.InputStream stream, GLib.Cancellable? cancellable = null)
+      public override void UdpdateImplementation(GLib.InputStream stream, GLib.Cancellable? cancellable = null)
       {
         var reader = new StreamReader(new GLib.GioStream(stream), null, true, bufferSize, true);
         globalCount = 0;
@@ -126,7 +126,6 @@ namespace Moogle.Engine
           }
         }
         while (true);
-        CalculateTf();
       }
 
 #endregion

@@ -23,11 +23,11 @@ namespace Moogle.Engine
   {
 #region Variables
 
-    public string Etag {get; set;}
-    protected string InvalidEtag = "";
-    public GLib.IFile Source {get; set;}
+    public string Etag {get; private set;}
+    public GLib.IFile Source {get; private set;}
+    public decimal globalCount { get; protected set; }
+    protected const string InvalidEtag = "";
     protected Hashtable words = new Hashtable();
-    protected decimal globalCount;
 
     protected class Counter
     {
@@ -38,26 +38,13 @@ namespace Moogle.Engine
 
 #region Abstracts
 
-    public abstract void UdpdateTfImplementation(GLib.InputStream stream, GLib.Cancellable? cancellable = null);
-
-#endregion
-
-#region Internal API
-
-    protected void CalculateTf()
-    {
-      foreach (var word in words.Keys)
-      {
-        var counter = ((Counter)words[word]!);
-        counter.count /= globalCount;
-      }
-    }
+    public abstract void UdpdateImplementation(GLib.InputStream stream, GLib.Cancellable? cancellable = null);
 
 #endregion
 
 #region API
 
-    public void UdpdateTf(GLib.Cancellable? cancellable = null)
+    public void Udpdate(GLib.Cancellable? cancellable = null)
     {
       var info =
       Source.QueryInfo("etag::value", GLib.FileQueryInfoFlags.None, cancellable);
@@ -68,12 +55,21 @@ namespace Moogle.Engine
         Source.Read(cancellable);
 
         /* Perferm implementation specific update */
-        UdpdateTfImplementation(stream, cancellable);
+        UdpdateImplementation(stream, cancellable);
 
         /* Close stream and update etag */
         stream.Close(cancellable);
         Etag = info.Etag;
       }
+    }
+
+    public decimal GetWordCount(string word)
+    {
+      object? object_ = words[word];
+      if (object_ != null)
+        return ((Counter) object_).count;
+      else
+        return 0;
     }
 
 #endregion

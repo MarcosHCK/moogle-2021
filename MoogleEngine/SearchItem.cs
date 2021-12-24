@@ -18,19 +18,30 @@
 
 namespace Moogle.Engine
 {
-  public class SearchItem
+  public class SearchItem : IComparable
   {
-    public SearchItem(string title, string snippet, float score)
+    public SearchItem(string title, string snippet, double score)
     {
       this.Title = title;
       this.Snippet = snippet;
       this.Score = score;
     }
 
+    public int CompareTo(object? object_)
+    {
+      if (object_ != null
+        && object_ is SearchItem)
+      {
+        var other = (SearchItem) object_;
+        return (Score < other.Score) ? 1 : -1;
+      }
+    return 0;
+    }
+
     public string Title { get; private set; }
 
     public string Snippet { get; private set; }
 
-    public float Score { get; private set; }
+    public double Score { get; private set; }
   }
 }
