@@ -45,7 +45,7 @@ namespace Moogle.Engine
           {
             var word = match.Value;
             if (words.ContainsKey(word))
-              ((Counter)words[word]!).count++;
+              ((Counter) words[word]!).count++;
             else
               words[word] = new Counter();
             globalCount++;

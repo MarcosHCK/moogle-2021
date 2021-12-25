@@ -88,7 +88,7 @@ namespace Moogle.Engine
 
     public SearchResult Query(string query)
     {
-      /* Prepare cncellable object */
+      /* prepare cncellable object */
       var token = Task.Factory.CancellationToken;
       var cancellable = new GLib.Cancellable();
       token.Register(() => cancellable.Cancel());
@@ -100,13 +100,21 @@ namespace Moogle.Engine
       corpus.Update();
       token.ThrowIfCancellationRequested();
 
-      SearchItem[] items = new SearchItem[3] {
-            new SearchItem("Hello World", "Lorem ipsum dolor sit amet", 0.9f),
-            new SearchItem("Hello World", "Lorem ipsum dolor sit amet", 0.5f),
-            new SearchItem("Hello World", "Lorem ipsum dolor sit amet", 0.1f),
-        };
+      /* create query document */
+      var vector = new QueryDocument(query);
+      var items = new SearchItem[corpus.Count];
+      int i = 0;
 
-      return new SearchResult(items, query);
+      foreach (Document document in corpus)
+      {
+        double score = vector.Similarity(document, corpus);
+        string title = document.ToString()!;
+        string snippet = $"Score: {score}";
+        items[i++] = new SearchItem(title, snippet, score);
+      }
+
+      Array.Sort(items as Array);
+    return new SearchResult(items, query);
     }
 
 #endregion

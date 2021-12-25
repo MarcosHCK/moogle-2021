@@ -19,10 +19,10 @@ using System.Collections;
 
 namespace Moogle.Engine
 {
-  public class Corpus
+  public class Corpus : IEnumerable, ICollection
   {
 #region Variables
-    public Hashtable documents = new Hashtable();
+    private Hashtable documents = new Hashtable();
 #endregion
 
 #region API
@@ -85,6 +85,31 @@ namespace Moogle.Engine
           documents.Remove(key);
       }
     }
+
+#endregion
+
+#region ICollection
+
+    public int Count {
+      get {
+        return documents.Values.Count;
+      }}
+    public bool IsSynchronized {
+      get {
+        return false;
+      }}
+    public object SyncRoot {
+      get {
+        return (object) this;
+      }}
+
+    public void CopyTo(Array array, int index) => documents.Values.CopyTo(array, index);
+
+#endregion
+
+#region IEnumerable
+
+    public IEnumerator GetEnumerator() => documents.Values.GetEnumerator();
 
 #endregion
 

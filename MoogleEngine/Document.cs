@@ -19,14 +19,14 @@ using System.Collections;
 
 namespace Moogle.Engine
 {
-  public abstract class Document
+  public abstract class Document : IEnumerable, ICollection
   {
 #region Variables
 
-    public string Etag {get; private set;}
-    public GLib.IFile Source {get; private set;}
-    public decimal globalCount { get; protected set; }
-    protected Hashtable words = new Hashtable();
+    private string Etag {get; set;}
+    private GLib.IFile Source {get; set;}
+    protected decimal globalCount = 0;
+    protected Hashtable words;
 
     protected class Counter
     {
@@ -73,10 +73,42 @@ namespace Moogle.Engine
 
 #endregion
 
+#region ICollection
+
+    public int Count {
+      get {
+        return words.Keys.Count;
+      }}
+    public bool IsSynchronized {
+      get {
+        return false;
+      }}
+    public object SyncRoot {
+      get {
+        return (object) this;
+      }}
+
+    public void CopyTo(Array array, int index) => words.Keys.CopyTo(array, index);
+
+#endregion
+
+#region IEnumerable
+
+    public IEnumerator GetEnumerator() => words.Keys.GetEnumerator();
+
+#endregion
+
+#region System.Object
+
+    public override string? ToString() => this.Source.Basename;
+
+#endregion
+
 #region Constructors
 
     public Document(GLib.IFile source)
     {
+      this.words = new Hashtable();
       this.Source = source;
       this.Etag = "0:0";
     }
