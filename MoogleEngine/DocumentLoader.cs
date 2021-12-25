@@ -21,31 +21,25 @@ namespace Moogle.Engine
 {
   public abstract class DocumentLoader
   {
-    /*
-     * Implementors attribute
-     *
-     */
+#region Implementations attribute
 
     [System.AttributeUsage(System.AttributeTargets.Class, Inherited = false, AllowMultiple = true)]
-    public sealed class MimeTypeAttribute : System.Attribute
+    protected sealed class MimeTypeAttribute : System.Attribute
     {
-      public const string invalid = "text/none";
       public string MimeType { get; set;}
-      public MimeTypeAttribute() => MimeType = invalid;
+      public MimeTypeAttribute() => MimeType = "text/none";
     }
 
-    /*
-     * Abstract interface
-     *
-     */
+#endregion
+
+#region Abstracts
 
     protected abstract Document LoadImplementation(GLib.IFile file, string MimeType, GLib.Cancellable? cancellable = null);
 
-    /*
-     * Document load
-     *
-     */
+#endregion
+
 #region Document load
+
     private static void Implementors(Assembly from, List<LoaderType> types)
     {
       var ttype = typeof(DocumentLoader);
@@ -57,11 +51,11 @@ namespace Moogle.Engine
     }
 
     private static List<LoaderType>? types = null;
-    public struct LoaderType
+    private struct LoaderType
     {
       public Type type;
       public DocumentLoader? instance = null;
-      public void Instantiate() => instance = (DocumentLoader?)Activator.CreateInstance(type);
+      public void Instantiate() => instance = (DocumentLoader?) Activator.CreateInstance(type);
       public LoaderType(Type type) => this.type = type;
     }
 
@@ -96,5 +90,6 @@ namespace Moogle.Engine
     return null;
     }
   }
+
 #endregion
 }

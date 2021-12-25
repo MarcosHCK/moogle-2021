@@ -86,34 +86,13 @@ namespace Moogle.Engine
       }
     }
 
-    public double TfIdf(string word, Document document) => Tf(word, document) * Idf(word, this);
-
-    public List<SearchItem> SearchItems(string word)
-    {
-      var idf = Idf(word, this);
-      var list = new List<SearchItem>();
-      foreach (Document document in documents.Values)
-      {
-        var tf = Tf(word, document);
-        if (tf > 0)
-        {
-          var score = tf * idf;
-          var snippet = $"{word}: {tf * idf}";
-          list.Add(new SearchItem(document.Source.ParsedName, snippet, score));
-        }
-      }
-
-      list.Sort();
-    return list;
-    }
-
 #endregion
 
 #region TF-IDF functions
 
     public static double Tf(string word, Document document)
     {
-      decimal count = document.GetWordCount(word);
+      decimal count = document[word];
       if (count == 0)
         return 0;
       else
@@ -129,7 +108,7 @@ namespace Moogle.Engine
       var documents = corpus.documents;
 
       foreach (Document document in documents.Values)
-        globalCount += (document.GetWordCount(word) != 0) ? 1 : 0;
+        globalCount += (document[word] != 0) ? 1 : 0;
       if (globalCount == 0)
         return 0;
     return Math.Log((double) (documents.Count / globalCount));

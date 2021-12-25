@@ -100,12 +100,12 @@ namespace Moogle.Engine
       corpus.Update();
       token.ThrowIfCancellationRequested();
 
-      /* Perform a word search */
-      var list = corpus.SearchItems(query);
-      var items = new SearchItem[list.Count];
-      int i = 0;
-      foreach (var item in list)
-        items[i++] = item;
+      SearchItem[] items = new SearchItem[3] {
+            new SearchItem("Hello World", "Lorem ipsum dolor sit amet", 0.9f),
+            new SearchItem("Hello World", "Lorem ipsum dolor sit amet", 0.5f),
+            new SearchItem("Hello World", "Lorem ipsum dolor sit amet", 0.1f),
+        };
+
       return new SearchResult(items, query);
     }
 

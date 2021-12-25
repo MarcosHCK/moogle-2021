@@ -26,7 +26,6 @@ namespace Moogle.Engine
     public string Etag {get; private set;}
     public GLib.IFile Source {get; private set;}
     public decimal globalCount { get; protected set; }
-    protected const string InvalidEtag = "";
     protected Hashtable words = new Hashtable();
 
     protected class Counter
@@ -34,11 +33,20 @@ namespace Moogle.Engine
       public decimal count = 1;
     }
 
+    public decimal this[string word] {
+      get {
+        object? object_ = words[word];
+        if (object_ != null)
+          return ((Counter) object_).count;
+        else
+          return 0;
+      }}
+
 #endregion
 
 #region Abstracts
 
-    public abstract void UdpdateImplementation(GLib.InputStream stream, GLib.Cancellable? cancellable = null);
+    public abstract void UpdateImplementation(GLib.InputStream stream, GLib.Cancellable? cancellable = null);
 
 #endregion
 
@@ -55,21 +63,12 @@ namespace Moogle.Engine
         Source.Read(cancellable);
 
         /* Perferm implementation specific update */
-        UdpdateImplementation(stream, cancellable);
+        UpdateImplementation(stream, cancellable);
 
         /* Close stream and update etag */
         stream.Close(cancellable);
         Etag = info.Etag;
       }
-    }
-
-    public decimal GetWordCount(string word)
-    {
-      object? object_ = words[word];
-      if (object_ != null)
-        return ((Counter) object_).count;
-      else
-        return 0;
     }
 
 #endregion
@@ -79,7 +78,7 @@ namespace Moogle.Engine
     public Document(GLib.IFile source)
     {
       this.Source = source;
-      this.Etag = InvalidEtag;
+      this.Etag = "0:0";
     }
 
 #endregion
