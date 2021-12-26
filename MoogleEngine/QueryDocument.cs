@@ -82,6 +82,56 @@ namespace Moogle.Engine
     return crossd / (norm1r * norm2r);
     }
 
+    public static SearchItem[] Perform(Corpus corpus, params QueryDocument[] queries)
+    {
+      /* Items list */
+      var items = new List<(string title, string snippet, double score)>();
+      double max = -1d;
+
+      /* Calculate per-vector, similarity with corpus' documents */
+      foreach (QueryDocument vector in queries)
+      {
+        foreach(Document document in corpus)
+        {
+          var score = vector.Similarity(document, corpus);
+          var title = document.ToString()!;
+          var snippet = $"Score: {score}";
+          items.Add((title, snippet, score));
+
+          /* Take biggest score */
+          if (score > max)
+            max = score;
+        }
+      }
+
+      if (0 >= max)
+        return new SearchItem[0];
+
+      /*
+       * Copy to output array
+       * and normalize it
+       *
+       */
+
+      var array = new SearchItem[items.Count];
+      int zeros = 0, i = 0;
+      double normalized;
+
+      foreach (var item in items)
+      {
+        normalized = item.score / max;
+        array[i++] = new SearchItem(item.title, (item.score / max).ToString(), normalized);
+
+        if (normalized < 0.2d)
+          zeros++;
+      }
+
+      /* Sort array */
+      Array.Sort<SearchItem>(array);
+      Array.Resize<SearchItem>(ref array, array.Length - zeros);
+    return array;
+    }
+
 #endregion
 
 #region Constructors

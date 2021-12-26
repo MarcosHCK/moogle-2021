@@ -15,36 +15,53 @@
  * along with Moogle!. If not, see <http://www.gnu.org/licenses/>.
  *
  */
+using System.Collections;
 
 namespace Moogle.Engine
 {
-  public class SearchResult
+  public class SearchResult : IEnumerable, ICollection
   {
+#region Variables
     private SearchItem[] items;
+    public string Suggestion {get; private set;}
 
-    public SearchResult(SearchItem[] items, string suggestion = "")
+#endregion
+
+#region ICollection
+
+    public int Count {
+      get {
+        return items.Length;
+      }}
+    public bool IsSynchronized {
+      get {
+        return false;
+      }}
+    public object SyncRoot {
+      get {
+        return (object) this;
+      }}
+
+    public void CopyTo(Array array, int index) => items.CopyTo(array, index);
+
+#endregion
+
+#region IEnumerable
+
+    public IEnumerator GetEnumerator() => items.GetEnumerator();
+
+#endregion
+
+#region Constructors
+
+    public SearchResult() : this(new SearchItem[0]) {}
+    public SearchResult(SearchItem[]? items, string suggestion = "")
     {
       if (items == null)
-      {
         throw new ArgumentNullException("items");
-      }
-
-      this.items = items;
       this.Suggestion = suggestion;
+      this.items = items;
     }
-
-    public SearchResult() : this(new SearchItem[0])
-    {
-
-    }
-
-    public string Suggestion { get; private set; }
-
-    public IEnumerable<SearchItem> Items()
-    {
-      return this.items;
-    }
-
-    public int Count { get { return this.items.Length; } }
+#endregion
   }
 }

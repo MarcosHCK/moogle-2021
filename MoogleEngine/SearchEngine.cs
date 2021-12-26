@@ -102,18 +102,9 @@ namespace Moogle.Engine
 
       /* create query document */
       var vector = new QueryDocument(query);
-      var items = new SearchItem[corpus.Count];
-      int i = 0;
 
-      foreach (Document document in corpus)
-      {
-        double score = vector.Similarity(document, corpus);
-        string title = document.ToString()!;
-        string snippet = $"Score: {score}";
-        items[i++] = new SearchItem(title, snippet, score);
-      }
-
-      Array.Sort(items as Array);
+      /* Perform final search */
+      var items = QueryDocument.Perform(corpus, vector);
     return new SearchResult(items, query);
     }
 

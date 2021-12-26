@@ -92,7 +92,6 @@ namespace Moogle.Engine
 #endregion
 
 #region ICollection
-
     public int Count {
       get {
         return documents.Values.Count;

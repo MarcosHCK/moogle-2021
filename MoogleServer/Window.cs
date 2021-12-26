@@ -68,7 +68,7 @@ namespace Moogle.Server
       });
 
       /* Append new search results */
-      foreach (var item in result.Items())
+      foreach (SearchItem item in result)
       {
         var entry = new SearchEntry(item.Title, item.Snippet);
         listbox1!.Add(entry);
