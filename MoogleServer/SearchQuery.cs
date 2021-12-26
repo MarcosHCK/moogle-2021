@@ -22,23 +22,37 @@ namespace Moogle.Server
 {
   public class SearchQuery : GLib.Object
   {
+#region Variables
     private Task? task = null;
     private CancellationTokenSource source;
     private Moogle.Engine.SearchEngine engine;
 
-    /*
-     * Events
-     *
-     */
+#endregion
+
+#region Exceptions
+
+    [System.Serializable]
+    public sealed class SearchQueryException : System.Exception
+    {
+      public SearchQueryException() { }
+      public SearchQueryException(string message) : base(message) { }
+      public SearchQueryException(string message, System.Exception inner) : base(message, inner) { }
+      private SearchQueryException(
+        System.Runtime.Serialization.SerializationInfo info,
+        System.Runtime.Serialization.StreamingContext context) : base(info, context) { }
+    }
+
+#endregion
+
+#region Events
 
     public delegate void CompletedHandler(SearchResult result);
     [GLib.Signal("completed")]
     public event CompletedHandler? Completed;
 
-    /*
-     * API
-     *
-     */
+#endregion
+
+#region API
 
     public void Start(string tag)
     {
@@ -116,15 +130,15 @@ namespace Moogle.Server
       }
     }
 
-    /*
-     * Constructors
-     *
-     */
+#endregion
 
-    public SearchQuery()
+#region Constructors
+
+    public SearchQuery(string folder)
     {
       this.source = new CancellationTokenSource();
-      this.engine = new Moogle.Engine.SearchEngine("../Content/");
+      this.engine = new Moogle.Engine.SearchEngine(folder);
     }
+#endregion
   }
 }

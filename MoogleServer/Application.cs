@@ -20,20 +20,38 @@ namespace Moogle.Server
 {
   public class Application : Gtk.Application, GLib.IInitable
   {
+#region Application
     public static string ApplicationName = "Moogle!";
     public static string ApplicationVersion = "1.0.0.0";
     public static string ApplicationWebsite = "https://github.com/MarcosHCK/moogle-2021/";
 
-    /*
-    * Virtuals
-    *
-    */
+#endregion
+
+#region GLib.IInitable
 
     public bool Init(GLib.Cancellable? cancellable = null)
     {
+      /*
+       * Initialize application core
+       *
+       */
+
       Gtk.Application.Init();
+
+      /*
+       * Settings default icon
+       *
+       */
+
+      var iconname = $"{this.ApplicationId}.icon.svg";
+      var pixbuf = new Gdk.Pixbuf(typeof(Application).Assembly, iconname);
+      Gtk.Window.DefaultIcon = pixbuf;
     return true;
     }
+
+#endregion
+
+#region  GLib.Application
 
     protected override void OnActivated()
     {
@@ -62,18 +80,16 @@ namespace Moogle.Server
       window.Present();
     }
 
-    /*
-    * Constructors
-    *
-    */
+#endregion
+
+#region Constructors
 
     public Application() : base(null, GLib.ApplicationFlags.None) {}
     public Application(string application_id, GLib.ApplicationFlags flags) : base(application_id, flags) {}
 
-    /*
-    * Server entry
-    *
-    */
+#endregion
+
+#region Program entry point
 
     [STAThread]
     public static int Main(string[] argv)
@@ -81,5 +97,6 @@ namespace Moogle.Server
       var app = new Moogle.Server.Application("org.hck.moogle", GLib.ApplicationFlags.None);
     return app.Run(ApplicationName, argv);
     }
+#endregion
   }
 }

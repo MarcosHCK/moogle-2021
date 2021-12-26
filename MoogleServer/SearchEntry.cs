@@ -24,9 +24,9 @@ namespace Moogle.Server
   public class SearchEntry : Gtk.Grid
   {
     [GtkChild]
-    private Gtk.Label? label1;
+    private Gtk.Label? label1 = null;
     [GtkChild]
-    private Gtk.Label? label2;
+    private Gtk.Label? label2 = null;
 
     public string Title {
       get {

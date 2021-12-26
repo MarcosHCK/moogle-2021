@@ -16,7 +16,6 @@
  *
  */
 using GtkChild = Gtk.Builder.ObjectAttribute;
-using System.Collections;
 using Moogle.Engine;
 
 namespace Moogle.Server
@@ -25,36 +24,50 @@ namespace Moogle.Server
   [Gtk.Template (ResourceName = "Window.ui")]
   public partial class Window : Gtk.Window
   {
+#region Variables
     private Gtk.Dialog? About = null;
     private SearchQuery query;
 
-    /*
-     * Template childs
-     *
-     */
+#endregion
+
+#region Template childs
 
     [GtkChild]
-    private Gtk.ListBox? listbox1;
+    private Gtk.ListBox? listbox1 = null;
     [GtkChild]
-    private Gtk.SearchBar? searchbar1;
-    [GtkChild]
-    private Gtk.SearchEntry? searchentry1;
-    [GtkChild]
-    private Gtk.EntryCompletion? entrycompletion1;
+    private Gtk.SearchEntry? searchentry1 = null;
 
-    /*
-     * Signals
-     *
-     */
+#endregion
 
-    private void OnSearchCompleted(SearchResult result)
+#region Workers
+
+    private void CleanListbox()
     {
       foreach (var child in listbox1!.Children)
       {
         listbox1!.Remove(child);
         child.Destroy();
       }
+    }
 
+#endregion
+
+#region Signals
+
+    private void OnSearchCompleted(SearchResult result)
+    {
+      /* Clean previous search's entries */
+      CleanListbox();
+
+      /* Update progress and setup a timeout */
+      searchentry1!.ProgressFraction = 1f;
+      GLib.Timeout.Add(500, () =>
+      {
+        searchentry1!.ProgressFraction = 0f;
+        return false;
+      });
+
+      /* Append new search results */
       foreach (var item in result.Items())
       {
         var entry = new SearchEntry(item.Title, item.Snippet);
@@ -68,19 +81,21 @@ namespace Moogle.Server
       var text = searchentry1!.Text;
       if (text != "")
       {
+        searchentry1!.ProgressFraction = 0.2f;
         query.Start(text);
+      }
+      else
+      {
+        searchentry1!.ProgressFraction = 0f;
+        CleanListbox();
       }
     }
 
     private void OnSearchStop(object? widget, System.EventArgs args)
     {
-      searchbar1!.SearchModeEnabled = false;
+      searchentry1!.ProgressFraction = 0f;
       query.Stop();
     }
-
-    private void OnKeyPressEvent(object? widget, Gtk.KeyPressEventArgs args) => args.RetVal = searchbar1!.HandleEvent(args.Event);
-    private void OnFocusOutEvent(object? widget, Gtk.FocusOutEventArgs args) => searchbar1!.SearchModeEnabled = false;
-    private void OnShowSearch(object? widget, System.EventArgs args) => searchbar1!.SearchModeEnabled = true;
 
     private void OnAbout(object? widget, System.EventArgs args)
     {
@@ -104,6 +119,10 @@ namespace Moogle.Server
         about.WebsiteLabel = "Github page";
         about.WrapLicense = true;
 
+        var logoname = $"{this.Application.ApplicationId}.svg";
+        var pixbuf = new Gdk.Pixbuf(typeof(Window).Assembly, logoname);
+        about.Logo = pixbuf;
+
         about.DeleteEvent +=
         (Gtk.DeleteEventHandler)
         ((widget, args) =>
@@ -117,22 +136,18 @@ namespace Moogle.Server
       About.Hide();
     }
 
-    private void OnQuit(System.Object button, System.EventArgs args) => this.Destroy();
+#endregion
 
-  /*
-   * Constructors
-   *
-   */
+#region Constructors
 
     public Window() : this(false) {}
     private Window(bool re) : base(null)
     {
       (new Gtk.TemplateBuilder()).InitTemplate(this);
-      this.query = new SearchQuery();
+      this.query = new SearchQuery("./Content/");
       this.query.Completed += OnSearchCompleted;
-      this.KeyPressEvent += OnKeyPressEvent;
-      searchentry1!.FocusOutEvent += OnFocusOutEvent;
-      searchbar1!.FocusOutEvent += OnFocusOutEvent;
     }
   }
+
+#endregion
 }
