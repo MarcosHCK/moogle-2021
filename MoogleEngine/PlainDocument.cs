@@ -43,7 +43,7 @@ namespace Moogle.Engine
         {
           if (match.Success)
           {
-            var word = match.Value;
+            var word = match.Value.ToLower();
             if (words.ContainsKey(word))
               ((Counter) words[word]!).count++;
             else
