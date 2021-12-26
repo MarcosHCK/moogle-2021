@@ -23,6 +23,7 @@ namespace Moogle.Engine
   {
 #region Variables
     private Hashtable documents = new Hashtable();
+    private Hashtable idfs = new Hashtable();
 #endregion
 
 #region API
@@ -48,6 +49,8 @@ namespace Moogle.Engine
         if(entry.Value == document)
         {
           documents.Remove(entry.Key);
+          foreach (string word in document)
+            idfs.Remove(word);
           return;
         }
       }
@@ -60,13 +63,13 @@ namespace Moogle.Engine
       {
         try
         {
-          ((Document) entry.Value!).Udpdate(cancellable);
+          ((Document) entry.Value!).Update(cancellable);
 
           if (cancellable != null
             && cancellable.IsCancelled)
             return;
         }
-        catch(GLib.GException e)
+        catch (GLib.GException e)
         {
           if(e.Domain == GLib.GioGlobal.ErrorQuark()
             && e.Code == (int) GLib.IOErrorEnum.NotFound)
@@ -126,7 +129,7 @@ namespace Moogle.Engine
       }
     }
 
-    public static double Idf(string word, Corpus corpus)
+    private static double Idf_(string word, Corpus corpus)
     {
       /* Count wor occurrencies */
       decimal globalCount = 0;
@@ -136,7 +139,19 @@ namespace Moogle.Engine
         globalCount += (document[word] != 0) ? 1 : 0;
       if (globalCount == 0)
         return 0;
-    return Math.Log((double) (documents.Count / globalCount));
+    return Math.Log((double) (documents.Count / globalCount)) + 1d;
+    }
+
+    public static double Idf(string word, Corpus corpus)
+    {
+      if (corpus.idfs[word] != null)
+        return (double) corpus.idfs[word]!;
+      else
+      {
+        var idf = Idf_(word, corpus);
+        corpus.idfs[word] = idf;
+        return idf;
+      }
     }
 
 #endregion

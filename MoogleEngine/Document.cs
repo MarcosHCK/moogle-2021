@@ -52,7 +52,7 @@ namespace Moogle.Engine
 
 #region API
 
-    public void Udpdate(GLib.Cancellable? cancellable = null)
+    public void Update(GLib.Cancellable? cancellable = null)
     {
       var info =
       Source.QueryInfo("etag::value", GLib.FileQueryInfoFlags.None, cancellable);
