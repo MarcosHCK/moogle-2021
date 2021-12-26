@@ -1,6 +1,6 @@
 # Moogle!
 
-![](moogle.png)
+![](https://github.com/MarcosHCK/moogle-2021/blob/6947caab1eed8fa8fb567a9fbabeb70d116d43b7/MoogleServer/Resources/Svg/org.hck.moogle.svg)
 
 > Proyecto de Programación I. Facultad de Matemática y Computación. Universidad de La Habana. Curso 2021.
 
