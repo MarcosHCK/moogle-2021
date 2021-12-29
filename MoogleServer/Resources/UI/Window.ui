@@ -80,11 +80,23 @@ Author: MarcosHCK
         <property name="title" translatable="yes">Moogle!</property>
         <property name="show-close-button">True</property>
         <child>
-          <object class="GtkImage">
+          <object class="GtkButton">
             <property name="visible">True</property>
-            <property name="can-focus">False</property>
-            <property name="icon-name">image-missing-symbolic</property>
+            <property name="can-focus">True</property>
+            <property name="receives-default">True</property>
+            <property name="relief">none</property>
+            <signal name="clicked" handler="OnAbout" object="MoogleServerWindow" swapped="no"/>
+            <child>
+              <object class="GtkImage" id="image1">
+                <property name="visible">True</property>
+                <property name="can-focus">False</property>
+                <property name="icon-name">image-missing-symbolic</property>
+              </object>
+            </child>
           </object>
+          <packing>
+            <property name="position">1</property>
+          </packing>
         </child>
       </object>
     </child>

@@ -24,6 +24,7 @@ namespace Moogle.Server
     public static string ApplicationName = "Moogle!";
     public static string ApplicationVersion = "1.0.0.0";
     public static string ApplicationWebsite = "https://github.com/MarcosHCK/moogle-2021/";
+    private Gdk.Pixbuf? logo = null;
 
 #endregion
 
@@ -46,6 +47,7 @@ namespace Moogle.Server
       var iconname = $"{this.ApplicationId}.icon.svg";
       var pixbuf = new Gdk.Pixbuf(typeof(Application).Assembly, iconname);
       Gtk.Window.DefaultIcon = pixbuf;
+      this.logo = pixbuf;
     return true;
     }
 
@@ -77,6 +79,7 @@ namespace Moogle.Server
 
       var window = new Moogle.Server.Window();
       this.AddWindow(window);
+      window.Icon = this.logo;
       window.Present();
     }
 

@@ -22,7 +22,7 @@ namespace Moogle.Server
 {
   [GLib.TypeName("MoogleServerWindow")]
   [Gtk.Template (ResourceName = "Window.ui")]
-  public partial class Window : Gtk.Window
+  public class Window : Gtk.Window
   {
 #region Variables
     private Gtk.Dialog? About = null;
@@ -32,6 +32,8 @@ namespace Moogle.Server
 
 #region Template childs
 
+    [GtkChild]
+    private Gtk.Image? image1 = null;
     [GtkChild]
     private Gtk.ListBox? listbox1 = null;
     [GtkChild]
@@ -136,6 +138,16 @@ namespace Moogle.Server
       About.Hide();
     }
 
+    private void OnNotifyIcon(object? widget, GLib.NotifyArgs args)
+    {
+      Gdk.Pixbuf? current = this.Icon;
+      if(current != null)
+      {
+        var pixbuf = current.ScaleSimple(16, 16, Gdk.InterpType.Bilinear);
+        this.image1!.Pixbuf = pixbuf;
+      }
+    }
+
 #endregion
 
 #region Constructors
@@ -146,6 +158,7 @@ namespace Moogle.Server
       (new Gtk.TemplateBuilder()).InitTemplate(this);
       this.query = new SearchQuery("./Content/");
       this.query.Completed += OnSearchCompleted;
+      this.AddNotification("icon", OnNotifyIcon);
     }
   }
 
