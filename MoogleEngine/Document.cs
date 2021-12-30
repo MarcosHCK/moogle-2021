@@ -28,14 +28,21 @@ namespace Moogle.Engine
     protected decimal globalCount = 0;
     protected Hashtable words;
 
+    protected struct Location
+    {
+      public decimal index;
+      public long position;
+      public int offset;
+    }
+
     protected class Counter
     {
       public decimal count = 1;
-      public List<decimal> locations;
+      public List<Location> locations;
 
       public Counter()
       {
-        locations = new List<decimal>();
+        locations = new List<Location>();
       }
     }
 
@@ -52,7 +59,8 @@ namespace Moogle.Engine
 
 #region Abstracts
 
-    public abstract void UpdateImplementation(GLib.InputStream stream, GLib.Cancellable? cancellable = null);
+    protected abstract void UpdateImplementation(GLib.InputStream stream, GLib.Cancellable? cancellable = null);
+    protected abstract string SnippetImplementation(string word, GLib.InputStream stream, GLib.Cancellable? cancellable = null);
 
 #endregion
 
@@ -60,21 +68,63 @@ namespace Moogle.Engine
 
     public void Update(GLib.Cancellable? cancellable = null)
     {
-      var info =
-      Source.QueryInfo("etag::value", GLib.FileQueryInfoFlags.None, cancellable);
-      if (info.Etag != Etag)
+      lock (words)
       {
-        /* open file */
-        var stream =
-        Source.Read(cancellable);
+        var info =
+        Source.QueryInfo("etag::value", GLib.FileQueryInfoFlags.None, cancellable);
+        if (info.Etag != Etag)
+        {
+          /* open file */
+          var stream =
+          Source.Read(cancellable);
 
-        /* Perferm implementation specific update */
-        UpdateImplementation(stream, cancellable);
+          /* Perferm implementation specific update */
+          UpdateImplementation(stream, cancellable);
 
-        /* Close stream and update etag */
-        stream.Close(cancellable);
-        Etag = info.Etag;
+          /* Close stream and update etag */
+          stream.Close(cancellable);
+          Etag = info.Etag;
+        }
       }
+    }
+
+    public string Snippet(string word, GLib.Cancellable? cancellable = null)
+    {
+      string? snippet = null;
+
+      lock (words)
+      {
+        if(words.Contains(word) == false)
+        {
+          throw new DocumentException($"Unknown word '{word}'");
+        }
+
+        var info =
+        Source.QueryInfo("etag::value", GLib.FileQueryInfoFlags.None, cancellable);
+        if (info.Etag == Etag)
+        {
+          /* open file */
+          var stream =
+          Source.Read(cancellable);
+
+          /* Perferm implementation specific update */
+          snippet =
+          SnippetImplementation(word, stream, cancellable);
+
+          /* Close stream and update etag */
+          stream.Close(cancellable);
+        }
+        else
+        {
+          throw new DocumentException(DocumentExceptionCode.MODIFIED);
+        }
+      }
+
+      if (snippet == null)
+      {
+        throw new DocumentException($"Can't load snippet for word '{word}'");
+      }
+    return snippet!;
     }
 
 #endregion

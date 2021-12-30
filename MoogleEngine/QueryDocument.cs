@@ -39,7 +39,8 @@ namespace Moogle.Engine
         return 0d;
     }
 
-    public override void UpdateImplementation(GLib.InputStream stream, GLib.Cancellable? cancellable = null) {}
+    protected override void UpdateImplementation(GLib.InputStream stream, GLib.Cancellable? cancellable = null) => throw new NotImplementedException();
+    protected override string SnippetImplementation(string word, GLib.InputStream stream, GLib.Cancellable? cancellable = null) => throw new NotImplementedException();
 
     public double Similarity (Document vector, Corpus corpus)
     {
@@ -82,10 +83,22 @@ namespace Moogle.Engine
     return crossd / (norm1r * norm2r);
     }
 
+    public string? GetSnippet (Document document)
+    {
+      foreach (string word in words.Keys)
+      {
+        if (document[word] > 0)
+        {
+          return document.Snippet(word);
+        }
+      }
+    return null;
+    }
+
     public static SearchItem[] Perform(Corpus corpus, params QueryDocument[] queries)
     {
       /* Items list */
-      var items = new List<(string title, string snippet, double score)>();
+      var items = new List<(string title, double score, QueryDocument vector, Document document)>();
       double max = -1d;
 
       /* Calculate per-vector, similarity with corpus' documents */
@@ -95,8 +108,7 @@ namespace Moogle.Engine
         {
           var score = vector.Similarity(document, corpus);
           var title = document.ToString()!;
-          var snippet = $"Score: {score}";
-          items.Add((title, snippet, score));
+          items.Add((title, score, vector, document));
 
           /* Take biggest score */
           if (score > max)
@@ -105,7 +117,9 @@ namespace Moogle.Engine
       }
 
       if (0 >= max)
+      {
         return new SearchItem[0];
+      }
 
       /*
        * Copy to output array
@@ -113,22 +127,33 @@ namespace Moogle.Engine
        *
        */
 
-      var array = new SearchItem[items.Count];
-      int zeros = 0, i = 0;
-      double normalized;
+      double ceil = 0.2d * max;
+      int elements = 0, i = 0;
+      SearchItem[] array;
 
+      /* Count usable entries */
       foreach (var item in items)
       {
-        normalized = item.score / max;
-        array[i++] = new SearchItem(item.title, (item.score / max).ToString(), normalized);
+        if (item.score > ceil)
+          elements++;
+      }
 
-        if (normalized < 0.2d)
-          zeros++;
+      array = new SearchItem[elements];
+
+      /* create entries */
+      foreach (var item in items)
+      {
+        if (item.score > ceil)
+        {
+          var snippet = item.vector.GetSnippet(item.document);
+          if(snippet == null)
+            snippet = "Can't load snippet for vector";
+          array[i++] = new SearchItem(item.title, snippet, item.score / max);
+        }
       }
 
       /* Sort array */
       Array.Sort<SearchItem>(array);
-      Array.Resize<SearchItem>(ref array, array.Length - zeros);
     return array;
     }
 
