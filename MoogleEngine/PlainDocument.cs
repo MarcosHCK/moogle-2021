@@ -43,11 +43,20 @@ namespace Moogle.Engine
         {
           if (match.Success)
           {
-            var word = match.Value.ToLower();
+            string word = match.Value.ToLower();
+            Counter counter;
             if (words.ContainsKey(word))
-              ((Counter) words[word]!).count++;
+            {
+              counter = (Counter)words[word]!;
+              counter.count++;
+            }
             else
-              words[word] = new Counter();
+            {
+              counter = new Counter();
+              words[word] = counter;
+            }
+
+            counter.locations.Add(globalCount);
             globalCount++;
           }
           else

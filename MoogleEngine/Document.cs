@@ -31,6 +31,12 @@ namespace Moogle.Engine
     protected class Counter
     {
       public decimal count = 1;
+      public List<decimal> locations;
+
+      public Counter()
+      {
+        locations = new List<decimal>();
+      }
     }
 
     public decimal this[string word] {
