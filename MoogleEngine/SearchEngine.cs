@@ -71,7 +71,7 @@ namespace Moogle.Engine
       file = GLib.FileFactory.NewForPath(Source);
       if (file == null)
       {
-        throw new Exception("I don't known, maybe some 'c#'s gdb' is needed");
+        throw new Exception("I don't known, maybe some \"c#'s gdb\" is needed");
       }
 
       /* Scan it! */
@@ -86,9 +86,9 @@ namespace Moogle.Engine
 
 #region API
 
-    public SearchResult Query(string query)
+    public void Preload()
     {
-      /* prepare cncellable object */
+      /* prepare cancellable object */
       var token = Task.Factory.CancellationToken;
       var cancellable = new GLib.Cancellable();
       token.Register(() => cancellable.Cancel());
@@ -96,15 +96,34 @@ namespace Moogle.Engine
       /* update document list */
       UpdateDocumentList(cancellable);
       token.ThrowIfCancellationRequested();
+
       /* reload documents which had been modified */
-      corpus.Update();
+      corpus.Update(cancellable);
+      token.ThrowIfCancellationRequested();
+    }
+
+    public SearchResult Query(string query)
+    {
+      /* prepare cancellable object */
+      var token = Task.Factory.CancellationToken;
+      var cancellable = new GLib.Cancellable();
+      token.Register(() => cancellable.Cancel());
+
+      /* update document list */
+      UpdateDocumentList(cancellable);
+      token.ThrowIfCancellationRequested();
+
+      /* reload documents which had been modified */
+      corpus.Update(cancellable);
       token.ThrowIfCancellationRequested();
 
       /* create query document */
       var vector = new QueryDocument(query);
+      token.ThrowIfCancellationRequested();
 
       /* Perform final search */
       var items = QueryDocument.Perform(corpus, vector);
+      token.ThrowIfCancellationRequested();
     return new SearchResult(items, query);
     }
 

@@ -32,7 +32,6 @@ namespace Moogle.Engine
     {
       public decimal index;
       public long position;
-      public int offset;
     }
 
     protected class Counter
@@ -50,7 +49,9 @@ namespace Moogle.Engine
       get {
         object? object_ = words[word];
         if (object_ != null)
+        {
           return ((Counter) object_).count;
+        }
         else
           return 0;
       }}

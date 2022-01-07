@@ -121,7 +121,9 @@ namespace Moogle.Engine
     {
       decimal count = document[word];
       if (count == 0)
+      {
         return 0;
+      }
       else
       {
         return Math.Log((double) (count)) + 1d;
@@ -136,9 +138,7 @@ namespace Moogle.Engine
 
       foreach (Document document in documents.Values)
         globalCount += (document[word] != 0) ? 1 : 0;
-      if (globalCount == 0)
-        return 0;
-    return Math.Log((double) (documents.Count / globalCount)) + 1d;
+    return Math.Log((double) (documents.Count / (globalCount + 1)));
     }
 
     public static double Idf(string word, Corpus corpus)

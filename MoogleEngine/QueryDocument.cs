@@ -22,40 +22,41 @@ namespace Moogle.Engine
   public class QueryDocument : Document
   {
 #region Variables
-    private static readonly Regex word_pattern = new Regex("[\\w]+", RegexOptions.Compiled | RegexOptions.Singleline);
-    private static GLib.IFile _default_ = (GLib.IFile)GLib.Object.GetObject((IntPtr) 0);
-    private Corpus query = new Corpus();
+    private static readonly Regex word_pattern = new Regex("[\\^\\!\\*]*[\\w]+", RegexOptions.Compiled | RegexOptions.Singleline);
+    private static GLib.IFile _default_ = (GLib.IFile) GLib.Object.GetObject((IntPtr) 0);
+    private static QueryOperator[]? operators;
+
+#endregion
+
+#region Counter subclass
+
+    private class QueryCounter : Counter
+    {
+      public QueryOperator.Filter? filter;
+    }
 
 #endregion
 
 #region API
 
-    private double tfidf(string word)
-    {
-      var count = this[word];
-      if (count > 0)
-        return Math.Log((double) count) + 1d;
-      else
-        return 0d;
-    }
-
     protected override void UpdateImplementation(GLib.InputStream stream, GLib.Cancellable? cancellable = null) => throw new NotImplementedException();
     protected override string SnippetImplementation(string word, GLib.InputStream stream, GLib.Cancellable? cancellable = null) => throw new NotImplementedException();
 
     public double Similarity (Document vector, Corpus corpus)
-    {
+    { /* A = this, B = vector */
       /* similarity = ( A*B / ||A|| * ||B|| ) */
-      decimal norm1 = 0; /* || A || */  /* SQRT( SUM( Ai^2  ) ) */
-      decimal norm2 = 0; /* || B || */  /* SQRT( SUM( Bi^2  ) ) */
-      decimal cross = 0; /*  A * B  */  /* SQRT( SUM( Ai*Bi ) ) */
+      double norm1 = 0; /* || A || */  /* SQRT( SUM( Ai^2  ) ) */
+      double norm2 = 0; /* || B || */  /* SQRT( SUM( Bi^2  ) ) */
+      double cross = 0; /*  A * B  */  /* SQRT( SUM( Ai*Bi ) ) */
 
       /* Calculate norm1, norm2 and cross for document words */
-      foreach (string word in vector)
+      foreach (string word in this)
       {
-        decimal tf = (decimal) Corpus.Tf(word, vector);
-        decimal idf = (decimal) Corpus.Idf(word, corpus);
-        decimal tfidf1 = (decimal) this.tfidf(word);
-        decimal tfidf2 = tf * idf;
+        double tf1 = Corpus.Tf(word, this);
+        double tf2 = Corpus.Tf(word, vector);
+        double idf = Corpus.Idf(word, corpus);
+        double tfidf1 = tf1 * idf;
+        double tfidf2 = tf2 * idf;
 
         norm1 += tfidf1 * tfidf1;
         norm2 += tfidf2 * tfidf2;
@@ -63,7 +64,7 @@ namespace Moogle.Engine
       }
 
       /* Calculate norm1, norm2 and cross for query words */
-      foreach (string word in this)
+      foreach (string word in vector)
       {
         /*
          * Filter out the words' components we already
@@ -71,16 +72,20 @@ namespace Moogle.Engine
          *
          */
 
-        if (vector[word] == 0)
+        if (this[word] == 0)
         {
-          norm1 += (decimal) this.tfidf(word);
+          double tf = Corpus.Tf(word, vector);
+          double idf = Corpus.Idf(word, corpus);
+          double tfidf = tf * idf;
+          norm2 += tfidf * tfidf;
         }
       }
 
-      double norm1r = Math.Sqrt((double) norm1);
-      double norm2r = Math.Sqrt((double) norm2);
-      double crossd = (double) cross;
-    return crossd / (norm1r * norm2r);
+      double norm1r = Math.Sqrt(norm1);
+      double norm2r = Math.Sqrt(norm2);
+      if(norm1r == 0 || norm2r == 0)
+        return 0d;
+    return cross / (norm1r * norm2r);
     }
 
     public string? GetSnippet (Document document)
@@ -102,13 +107,26 @@ namespace Moogle.Engine
       double max = -1d;
 
       /* Calculate per-vector, similarity with corpus' documents */
-      foreach (QueryDocument vector in queries)
+      foreach (QueryDocument query in queries)
       {
         foreach(Document document in corpus)
         {
-          var score = vector.Similarity(document, corpus);
+          var score = query.Similarity(document, corpus);
+          {
+            foreach (string word in query)
+            {
+              var counter = (QueryCounter?) query.words[word];
+              if (counter != null)
+              {
+                var filter = counter.filter;
+                if (filter != null)
+                  score = filter(query, document, score);
+              }
+            }
+          }
+
           var title = document.ToString()!;
-          items.Add((title, score, vector, document));
+          items.Add((title, score, query, document));
 
           /* Take biggest score */
           if (score > max)
@@ -127,7 +145,7 @@ namespace Moogle.Engine
        *
        */
 
-      double ceil = 0.2d * max;
+      double ceil = 0.3d * max;
       int elements = 0, i = 0;
       SearchItem[] array;
 
@@ -159,32 +177,124 @@ namespace Moogle.Engine
 
 #endregion
 
+#region Operators
+
+    private static (string?, QueryOperator?) BeginCapture(ref QueryOperator.Capture? context, Match first, Match current)
+    {
+      foreach (var operator_ in operators!)
+      {
+        QueryOperator.Capture? context_ = null;
+        string? value = null;
+
+        value =
+        operator_.BeginCapture(ref context_, first, current);
+        if (value != null)
+        {
+          context = context_;
+          return (value, operator_);
+        }
+      }
+    return (null,null);
+    }
+
+    private static QueryOperator.Filter? EndCapture(ref QueryOperator.Capture? context)
+    {
+      foreach (var operator_ in operators!)
+      {
+        QueryOperator.Capture? context_ = context;
+        QueryOperator.Filter? value = null;
+
+        value =
+        operator_.EndCapture(ref context_);
+        if (value != null)
+        {
+          return value;
+        }
+      }
+    return null;
+    }
+
+#endregion
+
 #region Constructors
 
-    public QueryDocument(string query) : base(_default_)
+    public class FallbackOperator : QueryOperator
+    {
+      public override string? BeginCapture(ref Capture? context, Match first, Match current) => current.Value;
+      public override Filter? EndCapture(ref Capture? context) => null;
+    }
+
+    private QueryDocument() : base(_default_)
+    {
+      if (operators == null)
+      {
+        var list = Utils.GetImplementors(typeof(QueryOperator));
+        var operator_list = new List<QueryOperator>();
+
+        foreach (Type type in list)
+        if(type != typeof(FallbackOperator))
+          {
+            var object_ = Activator.CreateInstance(type);
+            operator_list.Add((QueryOperator) object_!);
+          }
+
+        operator_list.Add(new FallbackOperator());
+
+        operators = new QueryOperator[operator_list.Count];
+        operator_list.CopyTo(0, operators, 0, operators.Length);
+      }
+    }
+
+    public QueryDocument(string query) : this()
     {
       var match =
       word_pattern.Match(query);
-      if (match.Success)
+      var first = match;
+      
+      do
       {
-        do
+        if (match.Success)
         {
-          if (match.Success)
+          QueryOperator.Capture? capture = null;
+          QueryOperator.Filter? filter = null;
+          QueryOperator? operator_ = null;
+          QueryCounter? counter = null;
+          string? word;
+
+          var state = 
+          BeginCapture (ref capture, first, match);
+          operator_ = state.Item2;
+          word = state.Item1;
+
+          if (word != null)
           {
-            var word = match.Value.ToLower();
             if (words.ContainsKey(word))
-              ((Counter) words[word]!).count++;
+            {
+              counter = (QueryCounter) words[word]!;
+              counter.count++;
+              globalCount++;
+            }
             else
-              words[word] = new Counter();
-            globalCount++;
-          }
-          else
-          {
-            break;
+            {
+              counter = new QueryCounter();
+              words[word] = counter;
+              globalCount++;
+            }
+
+            filter =
+            operator_!.EndCapture (ref capture);
+            if (filter != null)
+            {
+              counter.filter = filter;
+            }
           }
         }
-        while ((match = match.NextMatch()) != null);
+        else
+        {
+          break;
+        }
       }
+      while ((match = match.NextMatch()) != null);
     }
 
 #endregion

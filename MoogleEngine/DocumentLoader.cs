@@ -42,12 +42,9 @@ namespace Moogle.Engine
 
     private static void Implementors(Assembly from, List<LoaderType> types)
     {
-      var ttype = typeof(DocumentLoader);
-      foreach(var type in from.GetTypes())
-      {
-        if(type.IsSubclassOf(ttype) == true)
-          types.Add(new LoaderType(type));
-      }
+      var list = Utils.GetImplementors(typeof(DocumentLoader), from);
+      foreach (Type type in list)
+        types.Add(new LoaderType(type));
     }
 
     private static List<LoaderType>? types = null;

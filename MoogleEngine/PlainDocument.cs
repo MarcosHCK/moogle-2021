@@ -30,95 +30,97 @@ namespace Moogle.Engine
     private StringBuilder builder = new StringBuilder();
     private char[] buffer = new char[blockSize];
 
-    private long position;
-    private int offset;
-
-    private delegate bool PartialWorker (string word);
+    private delegate bool PartialWorker (string word, decimal offset);
 
 #endregion
 
 #region Overrides
 
-    private bool EmitPartial(PartialWorker worker, string partial)
-    {
-      var match =
-      word_pattern.Match(partial);
-      if (match.Success)
-      {
-        do
-        {
-          if (match.Success)
-          {
-            string word = match.Value.ToLower();
-            bool stop = worker(word);
-
-            if (stop == true)
-            {
-              return stop;
-            }
-          }
-          else
-          {
-            break;
-          }
-        }
-        while ((match = match.NextMatch()) != null);
-      }
-    return false;
-    }
-
-    private bool EmitBlock(PartialWorker worker, char[] block, int read)
-    {
-      bool stop  = false;
-      bool cr = false;
-
-      for (int i = 0; i < read; i++)
-      {
-        var c = block[i];
-        switch (c)
-        {
-          case '\r':
-            cr = true;
-            break;
-          case '\n':
-            cr = false;
-            stop = EmitPartial(worker, builder.ToString());
-            builder.Clear();
-            if (stop == true) return stop;
-            break;
-          case '\x20':
-            EmitPartial(worker, builder.ToString());
-            builder.Clear();
-            if (stop == true) return stop;
-            break;
-          default:
-            if (cr == true)
-            {
-              cr = false;
-              EmitPartial(worker, builder.ToString());
-              builder.Clear();
-              if (stop == true) return stop;
-            }
-
-            builder.Append(c);
-            break;
-        }
-      }
-    return stop;
-    }
-
     private void ProcessStream(PartialWorker worker, StreamReader reader, GLib.Cancellable? cancellable = null)
     {
       builder.Clear();
+      decimal offset = 0;
       bool stop = false;
       int read;
 
+      bool EmitPartial(PartialWorker worker, string partial)
+      {
+        var match =
+        word_pattern.Match(partial);
+        if (match.Success)
+        {
+          do
+          {
+            if (match.Success)
+            {
+              string word = match.Value;
+              string lower = word.ToLower();
+              bool stop;
+
+              stop = worker(word, offset);
+              if (stop == true)
+                return stop;
+              if (word != lower)
+              {
+                stop = worker(lower, offset);
+                if (stop == true)
+                  return stop;
+              }
+
+              offset++;
+            }
+            else
+            {
+              break;
+            }
+          }
+          while ((match = match.NextMatch()) != null);
+        }
+        return false;
+      }
+
+      bool EmitBlock(PartialWorker worker, char[] block, int read)
+      {
+        bool stop = false;
+        bool cr = false;
+
+        for (int i = 0; i < read; i++)
+        {
+          var c = block[i];
+          switch (c)
+          {
+            case '\r':
+              cr = true;
+              break;
+            case '\n':
+              cr = false;
+              stop = EmitPartial(worker, builder.ToString());
+              builder.Clear();
+              if (stop == true) return stop;
+              break;
+            case '\x20':
+              EmitPartial(worker, builder.ToString());
+              builder.Clear();
+              if (stop == true) return stop;
+              break;
+            default:
+              if (cr == true)
+              {
+                cr = false;
+                EmitPartial(worker, builder.ToString());
+                builder.Clear();
+                if (stop == true) return stop;
+              }
+
+              builder.Append(c);
+              break;
+          }
+        }
+        return stop;
+      }
+
       do
       {
-        position =
-        reader.BaseStream.Position;
-        offset = 0;
-
         read =
         reader.ReadBlock(buffer, 0, blockSize);
         if (read > 0)
@@ -128,7 +130,7 @@ namespace Moogle.Engine
           if (cancellable != null
             && cancellable.IsCancelled)
             return;
-          if (stop == false)
+          if (stop == true)
             return;
         }
         else
@@ -136,7 +138,7 @@ namespace Moogle.Engine
           buffer[0] = '\n';
           stop =
           EmitBlock(worker, buffer, 1);
-          if (stop == false)
+          if (stop == true)
             return;
           break;
         }
@@ -147,18 +149,18 @@ namespace Moogle.Engine
     protected override void UpdateImplementation(GLib.InputStream stream, GLib.Cancellable? cancellable = null)
     {
       var wrapper = new GLib.GioStream(stream);
-      var reader = new StreamReader(wrapper, null, true, bufferSize, true);
+      var reader = new StreamReader(wrapper, null, true, bufferSize, false);
 
       globalCount = 0;
       words.Clear();
 
-      ProcessStream((word) => {
+      ProcessStream((word, offset) => {
         Counter counter;
 
         /* append word to hash table */
         if (words.ContainsKey(word))
         {
-          counter = (Counter)words[word]!;
+          counter = (Counter) words[word]!;
           counter.count++;
         }
         else
@@ -169,14 +171,11 @@ namespace Moogle.Engine
 
         /* append location */
         var loc = new Location();
-        loc.index = globalCount;
-        loc.position = position;
-        loc.offset = offset;
+        loc.index = offset;
         counter.locations.Add(loc);
 
         /* Counters */
         globalCount++;
-        offset++;
       return false;
       }, reader, cancellable);
     }
@@ -195,16 +194,15 @@ namespace Moogle.Engine
        *
        */
 
-      const int blocksz = 33;
-      const int blocks = 4;
-      double size  = (double) word.Length;
-      double clampt = Math.Log10(size + 1d) + 1d;
-      long offset = ((long) clampt) - (blocksz * (blocks / 2));
-      if(loc.position + offset < 0)
-        loc.position = -offset;
-      wrapper.Seek(loc.position + offset, SeekOrigin.Begin);
-
-      var array = new char[blocksz * blocks];
+      const double chars = 33d;
+      double size = (double) word.Length;
+      double clampt = (Math.Log10(size + 1d) + 1d) * chars;
+      long length = (long) clampt;
+      long offset = loc.position - (length / 2);
+      if (offset < 0)
+        offset = 0;
+      var array = new char[length];
+      wrapper.Seek(offset, SeekOrigin.Begin);
       reader.ReadBlock(array, 0, array.Length);
     return new string(array);
     }
