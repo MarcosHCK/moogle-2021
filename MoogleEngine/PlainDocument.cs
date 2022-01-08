@@ -30,7 +30,7 @@ namespace Moogle.Engine
     private StringBuilder builder = new StringBuilder();
     private char[] buffer = new char[blockSize];
 
-    private delegate bool PartialWorker (string word, decimal offset);
+    private delegate bool PartialWorker (string word, decimal offset, long position);
 
 #endregion
 
@@ -40,6 +40,7 @@ namespace Moogle.Engine
     {
       builder.Clear();
       decimal offset = 0;
+      long position = 0;
       bool stop = false;
       int read;
 
@@ -57,12 +58,12 @@ namespace Moogle.Engine
               string lower = word.ToLower();
               bool stop;
 
-              stop = worker(word, offset);
+              stop = worker(word, offset, position);
               if (stop == true)
                 return stop;
               if (word != lower)
               {
-                stop = worker(lower, offset);
+                stop = worker(lower, offset, position);
                 if (stop == true)
                   return stop;
               }
@@ -86,7 +87,10 @@ namespace Moogle.Engine
 
         for (int i = 0; i < read; i++)
         {
+          position +=
+          reader.CurrentEncoding.GetByteCount(block, i, 1);
           var c = block[i];
+
           switch (c)
           {
             case '\r':
@@ -154,7 +158,7 @@ namespace Moogle.Engine
       globalCount = 0;
       words.Clear();
 
-      ProcessStream((word, offset) => {
+      ProcessStream((word, offset, position) => {
         Counter counter;
 
         /* append word to hash table */
@@ -172,6 +176,7 @@ namespace Moogle.Engine
         /* append location */
         var loc = new Location();
         loc.index = offset;
+        loc.position = position;
         counter.locations.Add(loc);
 
         /* Counters */
