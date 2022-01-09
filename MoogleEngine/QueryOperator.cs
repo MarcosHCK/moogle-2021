@@ -145,6 +145,75 @@ namespace Moogle.Engine
         throw new NotImplementedException();
       }
     }
+
+    public class ProximityOperator : QueryOperator
+    {
+      private class MoreCapture : Capture
+      {
+        public string other = "";
+      }
+
+      [System.Serializable]
+      public class ProximityOperatorException : System.Exception
+      {
+        public ProximityOperatorException() { }
+        public ProximityOperatorException(string message) : base(message) { }
+        public ProximityOperatorException(string message, System.Exception inner) : base(message, inner) { }
+        protected ProximityOperatorException(
+          System.Runtime.Serialization.SerializationInfo info,
+          System.Runtime.Serialization.StreamingContext context) : base(info, context) { }
+      }
+
+      public override string? BeginCapture(ref Capture? context, Match first, Match current)
+      {
+        context = null;
+        Match? match, last = null;
+        string word = current.Value;
+        string? other = null;
+
+        if (word[0] == '~')
+        {
+          if (current == first)
+            throw new ProximityOperatorException($"Word '{word}' hasn't preceding one");
+
+          word = word.Substring(1);
+          for (match = first;
+               match.Success;
+               last = match,
+               match = match.NextMatch())
+          {
+            if (match == current)
+            {
+              other = last!.Value;
+              break;
+            }
+          }
+
+          if (other == null)
+            throw new ProximityOperatorException($"Error retreiving preciding word for '{word}'");
+
+          var
+          context_ = new MoreCapture();
+          context_.instance = word;
+          context_.other = other;
+          context = context_;
+          return word;
+        }
+      return null;
+      }
+
+      public override Filter? EndCapture(ref Capture? context)
+      {
+        if (context == null)
+          return null;
+        if (context.GetType() != typeof(MoreCapture))
+          throw new ArgumentException($"Invalid capture context type '{context.GetType().Name}'");
+        return (Document query, Document vector, double score) =>
+        {
+          throw new NotImplementedException();
+        };
+      }
+    }
   }
 
 #endregion
