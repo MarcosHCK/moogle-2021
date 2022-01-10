@@ -42,7 +42,7 @@ namespace Moogle.Engine
     public async Task<bool> Preload()
     {
       var folder = GLib.FileFactory.NewForPath (Source);
-      var loader = new CorpusFactory (typeof(SearchEngine).Assembly);
+      var loader = new Corpus.Factory (typeof(SearchEngine).Assembly);
       corpus = await loader.FromFolder(folder);
     return true;
     }

@@ -15,41 +15,14 @@
  * along with Moogle!. If not, see <http://www.gnu.org/licenses/>.
  *
  */
-using System.Collections;
 
 namespace Moogle.Engine
 {
-  public class Corpus : System.Object, IEnumerable<KeyValuePair<string, Corpus.Word>>
+  public partial class Corpus : System.Object
   {
 #region Variables
-    private Dictionary<string, Word> words;
-
-#endregion
-
-#region Arcilliary classes
-
-    public class Word
-    {
-      public decimal occurrences;
-      public Dictionary<GLib.IFile, Source> locations;
-
-      public class Source
-      {
-        public List<decimal> offsets;
-
-        public Source()
-        {
-          this.offsets = new List<decimal>();
-        }
-      }
-
-      public Word()
-      {
-        this.locations =
-        new Dictionary<GLib.IFile, Source>();
-        this.occurrences = 0;
-      }
-    }
+    public Dictionary<string, Word> Words {get; private set;}
+    public Dictionary<GLib.IFile, Document> Documents {get; private set;}
 
 #endregion
 
@@ -57,42 +30,74 @@ namespace Moogle.Engine
 
     public void Add (string word, decimal offset, GLib.IFile from)
     {
+      Document? document = null;
       Word.Source? source = null;
-      Word? ctx = null;
+      Word? store = null;
 
       do
       {
-        if (words.ContainsKey (word))
+        if (!Documents.ContainsKey(from))
+          Documents.Add (from, new Document ());
+        else
         {
-          ctx = words[word];
-          ctx.occurrences++;
+          document = Documents[from];
+          if (!document.Words.ContainsKey (word))
+            document.Words.Add (word, 1);
+          else
+            document.Words[word]++;
+        }
+      } while (document == null);
+
+      do
+      {
+        if (!Words.ContainsKey(word))
+          Words.Add (word, new Word ());
+        else
+        {
+          store = Words[word];
+          store.Occurrences++;
 
           do
           {
-            if (ctx.locations.ContainsKey (from))
-            {
-              source = ctx.locations[from];
-              source.offsets.Add (offset);
-            }
+            if(!store.Locations.ContainsKey(document))
+              store.Locations.Add (document, new Word.Source ());
             else
             {
-              ctx.locations.Add (from, new Word.Source ());
+              source = store.Locations[document];
+              source.Offsets.Add (offset);
             }
           } while (source == null);
         }
-        else
-        {
-          words.Add (word, new Word ());
-        }
-      } while (ctx == null);
+      } while (store == null);
     }
 
 #endregion
 
-#region IEnumerable
+#region Operations
 
-    IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
-    public IEnumerator<KeyValuePair<string, Word>> GetEnumerator() => words.GetEnumerator();
+    public static double Tf (string word, Document document)
+    {
+      decimal count;
+      if (document.Words.TryGetValue(word, out count))
+        return Math.Log ((double) count) + 1d;
+    return 0d;
+    }
+
+    public static double Idf (string word, Corpus corpus)
+    {
+      Word store;
+      if(corpus.Words.TryGetValue(word, out store!))
+      {
+        decimal docs = (decimal) store.Locations.Keys.Count;
+        return Math.Log ((double) (docs / (store.Occurrences)));
+      }
+    return 0d;
+    }
+
+    public static double Tfidf (string word, Document document, Corpus corpus)
+    {
+      return Tf (word, document) * Idf (word, corpus);
+    }
 
 #endregion
 
@@ -100,7 +105,8 @@ namespace Moogle.Engine
 
     public Corpus()
     {
-      this.words = new Dictionary<string, Word>();
+      this.Documents = new Dictionary<GLib.IFile, Document>();
+      this.Words = new Dictionary<string, Word>();
     }
 
 #endregion
