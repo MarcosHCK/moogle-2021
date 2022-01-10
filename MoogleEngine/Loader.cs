@@ -15,22 +15,35 @@
  * along with Moogle!. If not, see <http://www.gnu.org/licenses/>.
  *
  */
+using System.Collections;
 
 namespace Moogle.Engine
 {
-  public class SearchItem
+  public abstract class Loader : System.Object, IEnumerable<(string Word, decimal Offset)>
   {
-    public SearchItem(string title, string snippet, double score)
+    public GLib.IFile Source {get; private set;}
+
+    [System.AttributeUsage(System.AttributeTargets.Class, Inherited = false, AllowMultiple = true)]
+    public sealed class MimeTypeAttribute : System.Attribute
     {
-      this.Title = title;
-      this.Snippet = snippet;
-      this.Score = score;
+      public string MimeType {get; set;}
+      public MimeTypeAttribute() => this.MimeType = "none";
     }
 
-    public string Title { get; private set; }
+#region IEnumeratable
 
-    public string Snippet { get; private set; }
+    IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+    public abstract IEnumerator<(string Word, decimal Offset)> GetEnumerator();
 
-    public double Score { get; private set; }
+#endregion
+
+#region Constructors
+
+    public Loader(GLib.IFile source)
+    {
+      this.Source = source;
+    }
+
+#endregion
   }
 }
