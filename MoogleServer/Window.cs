@@ -26,14 +26,19 @@ namespace Moogle.Server
   {
 #region Variables
     private Gtk.Dialog? About = null;
-    private SearchQuery query;
+    private SearchEngine engine;
+    private AsyncQuery query;
 
-#endregion
+    #endregion
 
-#region Template childs
+    #region Template childs
 
     [GtkChild]
+    private Gtk.Grid? grid1 = null;
+    [GtkChild]
     private Gtk.Image? image1 = null;
+    [GtkChild]
+    private Gtk.Spinner? spinner1 = null;
     [GtkChild]
     private Gtk.ListBox? listbox1 = null;
     [GtkChild]
@@ -84,7 +89,16 @@ namespace Moogle.Server
       if (text != "")
       {
         searchentry1!.ProgressFraction = 0.2f;
-        query.Start(text);
+        query.Start((token) =>
+        {
+          var result =
+          engine.Query(text);
+          token.ThrowIfCancellationRequested();
+          GLib.Idle.Add(() => {
+            OnSearchCompleted(result);
+            return false;
+          });
+        });
       }
       else
       {
@@ -156,9 +170,25 @@ namespace Moogle.Server
     private Window(bool re) : base(null)
     {
       (new Gtk.TemplateBuilder()).InitTemplate(this);
-      this.query = new SearchQuery("./Content/");
-      this.query.Completed += OnSearchCompleted;
+      this.engine = new SearchEngine("./Content/");
+      this.query = new AsyncQuery();
+
       this.AddNotification("icon", OnNotifyIcon);
+
+      spinner1!.Visible = true;
+      grid1!.Sensitive = false;
+      grid1!.Visible = false;
+
+      Task.Run(async () =>
+      {
+        await engine.Preload();
+        GLib.Idle.Add(() => {
+          grid1!.Visible = true;
+          grid1!.Sensitive = true;
+          spinner1!.Visible = false;
+          return false;
+        });
+      });
     }
   }
 
