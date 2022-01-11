@@ -50,10 +50,10 @@ namespace Moogle.Engine
     public SearchResult Query(string query)
     {
       /* create query document */
-      var vector = new SearchQuery(query);
+      var vector = new Corpus.Query(query);
 
       /* Perform final search */
-      var items = SearchQuery.Perform (corpus!, vector);
+      var items = Corpus.Query.Perform (corpus!, vector);
       return new SearchResult(items, query);
     }
 
