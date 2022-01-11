@@ -15,19 +15,34 @@
  * along with Moogle!. If not, see <http://www.gnu.org/licenses/>.
  *
  */
+using System.Collections;
 
 namespace Moogle.Engine
 {
   public partial class Corpus
   {
-    public class Document
+    public class Document : System.Object, IEnumerable<string>
     {
+#region Variables
       public Dictionary<string, decimal> Words {get; private set;}
+
+#endregion
+
+#region IEnumerable
+
+      IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+      public IEnumerator<string> GetEnumerator() => Words.Keys.GetEnumerator();
+
+#endregion
+
+#region Constructors
 
       public Document()
       {
         this.Words = new Dictionary<string, decimal>();
       }
+
+#endregion
     }
   }
 }

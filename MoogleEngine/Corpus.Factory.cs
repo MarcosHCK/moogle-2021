@@ -21,7 +21,7 @@ namespace Moogle.Engine
 {
   public partial class Corpus
   {
-    public class Factory
+    public class Factory : System.Object
     {
       private static Dictionary<string, Type>? loaders;
       private static Type[] arglist = {typeof (GLib.IFile)};

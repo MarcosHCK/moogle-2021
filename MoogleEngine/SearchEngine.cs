@@ -49,7 +49,12 @@ namespace Moogle.Engine
 
     public SearchResult Query(string query)
     {
-    return new SearchResult(new SearchItem[0], query);
+      /* create query document */
+      var vector = new SearchQuery(query);
+
+      /* Perform final search */
+      var items = SearchQuery.Perform (corpus!, vector);
+      return new SearchResult(items, query);
     }
 
 #endregion

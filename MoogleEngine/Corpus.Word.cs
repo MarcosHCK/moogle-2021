@@ -20,12 +20,12 @@ namespace Moogle.Engine
 {
   public partial class Corpus
   {
-    public class Word
+    public class Word : System.Object
     {
       public decimal Occurrences {get; set;}
       public Dictionary<Document, Source> Locations {get; private set;}
 
-      public class Source
+      public class Source : System.Object
       {
         public List<decimal> Offsets {get; private set;}
 
