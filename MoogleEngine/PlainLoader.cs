@@ -30,6 +30,42 @@ namespace Moogle.Engine
 
 #endregion
 
+#region Abstracts
+
+    public override string GetSnippet (decimal offset, int wordlen, int chars_fb)
+    {
+      var token = Task.Factory.CancellationToken;
+      token.ThrowIfCancellationRequested();
+      var cancellable = new GLib.Cancellable();
+      token.Register(() => cancellable.Cancel());
+
+      var stream__ = Source.Read(cancellable);
+      var stream_ = new GLib.GioStream(stream__);
+      var stream = new StreamReader(stream_, null, true, bufferSize, false);
+
+      /*
+       * Seek some bytes before
+       * supplied offset
+       * (should be enough to
+       * catch some words)
+       *
+       */
+
+      double chars = (double) chars_fb;
+      double size = (double) wordlen;
+      double clampt = (Math.Log10(size + 1d) + 1d) * chars;
+      decimal length = (decimal) clampt;
+      decimal position = offset - (length / 2);
+      if (position < 0)
+        position = 0;
+      var array = new char[(int) length];
+      stream_.Seek((long) position, SeekOrigin.Begin);
+      stream.ReadBlock(array, 0, array.Length);
+    return new string(array);
+    }
+
+#endregion
+
 #region IEnumerable
 
     public override IEnumerator<(string Word, decimal Offset)> GetEnumerator()
@@ -131,6 +167,7 @@ namespace Moogle.Engine
         }
       }
       while (read != 0);
+      stream.Close ();
     }
 
 #endregion

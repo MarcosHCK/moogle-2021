@@ -21,6 +21,15 @@ namespace Moogle.Engine
 {
   public partial class Corpus
   {
+    private Dictionary<GLib.IFile, Loader> loaders = new Dictionary<GLib.IFile, Loader>();
+
+    public string GetSnippet (GLib.IFile file, decimal offset, int wordlen = 5, int chars_fb = 33)
+    {
+      if (loaders.ContainsKey (file) == false)
+        throw new ArgumentException ();
+    return loaders[file].GetSnippet (offset, wordlen, chars_fb);
+    }
+
     public class Factory : System.Object
     {
       private static Dictionary<string, Type>? loaders;
@@ -42,16 +51,19 @@ namespace Moogle.Engine
         token.Register(() => cancellable.Cancel());
 
         if (loaders!.ContainsKey (info.ContentType) == false)
-          throw new LoaderNotFoundException();
+          return false;
         var type = loaders![info.ContentType];
         var ctor = type.GetConstructor (arglist);
-        var loader = ctor!.Invoke ( new object[] {file} );
+        var loader_ = ctor!.Invoke ( new object[] {file} );
+        var loader = (Loader) loader_;
 
-        await Task.Run(() =>
+        await Task.Run (() =>
         {
-          foreach (var tuple in (Loader)loader)
+          corpus.loaders.Add (file, loader);
+
+          foreach (var tuple in loader)
           {
-            corpus.Add(tuple.Word, tuple.Offset, file);
+            corpus.Add (tuple.Word, tuple.Offset, file);
           }
         });
       return true;

@@ -30,6 +30,8 @@ namespace Moogle.Engine
       public MimeTypeAttribute() => this.MimeType = "none";
     }
 
+    public abstract string GetSnippet (decimal offset, int wordlen, int chars_fb);
+
 #region IEnumeratable
 
     IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
