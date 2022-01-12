@@ -15,33 +15,26 @@
  * along with Moogle!. If not, see <http://www.gnu.org/licenses/>.
  *
  */
+using System.Text.RegularExpressions;
 
 namespace Moogle.Engine
 {
-  public class SearchItem : System.Object, IComparable
+  public partial class Corpus
   {
-    public SearchItem(string title, string snippet, double score)
+    public partial class Query
     {
-      this.Title = title;
-      this.Snippet = snippet;
-      this.Score = score;
-    }
-
-    public int CompareTo (object? object_)
-    {
-      if (object_ != null
-        && object_ is SearchItem)
+      public abstract class Operator
       {
-        var other = (SearchItem)object_;
-        return (Score < other.Score) ? 1 : -1;
+        public class Capture
+        {
+          public string instance = "";
+        }
+
+        public delegate double Filter(object query, Corpus corpus, Corpus.Document vector, double score);
+
+        public abstract string? BeginCapture(ref Capture? context, Match first, Match current);
+        public abstract Filter? EndCapture(ref Capture? context);
       }
-      return 0;
     }
-
-    public string Title { get; private set; }
-
-    public string Snippet { get; private set; }
-
-    public double Score { get; private set; }
   }
 }

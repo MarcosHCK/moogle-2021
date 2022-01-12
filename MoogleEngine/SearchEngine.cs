@@ -15,7 +15,6 @@
  * along with Moogle!. If not, see <http://www.gnu.org/licenses/>.
  *
  */
-using System.Threading;
 
 namespace Moogle.Engine
 {
@@ -23,108 +22,28 @@ namespace Moogle.Engine
   {
 #region Variables
     public string Source {get; private set;}
-    private Corpus corpus = new Corpus();
-
-    [System.Serializable]
-    public sealed class SearchEngineException : System.Exception
-    {
-      public SearchEngineException() { }
-      public SearchEngineException(string message) : base(message) { }
-      public SearchEngineException(string message, System.Exception inner) : base(message, inner) { }
-      private SearchEngineException(
-        System.Runtime.Serialization.SerializationInfo info,
-        System.Runtime.Serialization.StreamingContext context) : base(info, context) { }
-    }
-
-#endregion
-
-#region Workers
-
-    private void ScanDirectory(GLib.IFile directory, GLib.Cancellable? cancellable = null)
-    {
-      var enumerator =
-      directory.EnumerateChildren("standard::name,standard::content-type", GLib.FileQueryInfoFlags.None, cancellable);
-      foreach (var info in enumerator)
-      {
-        switch(info.FileType)
-        {
-        case GLib.FileType.Directory:
-          ScanDirectory(directory.GetChild(info.Name), cancellable);
-          break;
-        case GLib.FileType.Regular:
-          corpus.Add(directory.GetChild(info.Name), info, cancellable);
-          break;
-        }
-
-        if (cancellable != null
-          && cancellable.IsCancelled)
-          return;
-      }
-    }
-
-    private void UpdateDocumentList(GLib.Cancellable? cancellable = null)
-    {
-      /* Scan source directory */
-#region Directory loading
-      GLib.IFile? file = null;
-
-      file = GLib.FileFactory.NewForPath(Source);
-      if (file == null)
-      {
-        throw new Exception("I don't known, maybe some \"c#'s gdb\" is needed");
-      }
-
-      /* Scan it! */
-      ScanDirectory(file, cancellable);
-      if (cancellable != null
-          && cancellable.IsCancelled)
-        return;
-#endregion
-    }
+    private Corpus? corpus;
 
 #endregion
 
 #region API
 
-    public void Preload()
+    public async Task<bool> Preload()
     {
-      /* prepare cancellable object */
-      var token = Task.Factory.CancellationToken;
-      var cancellable = new GLib.Cancellable();
-      token.Register(() => cancellable.Cancel());
-
-      /* update document list */
-      UpdateDocumentList(cancellable);
-      token.ThrowIfCancellationRequested();
-
-      /* reload documents which had been modified */
-      corpus.Update(cancellable);
-      token.ThrowIfCancellationRequested();
+      var folder = GLib.FileFactory.NewForPath (Source);
+      var loader = new Corpus.Factory (typeof(SearchEngine).Assembly);
+      corpus = await loader.FromFolder(folder);
+    return true;
     }
 
     public SearchResult Query(string query)
     {
-      /* prepare cancellable object */
-      var token = Task.Factory.CancellationToken;
-      var cancellable = new GLib.Cancellable();
-      token.Register(() => cancellable.Cancel());
-
-      /* update document list */
-      UpdateDocumentList(cancellable);
-      token.ThrowIfCancellationRequested();
-
-      /* reload documents which had been modified */
-      corpus.Update(cancellable);
-      token.ThrowIfCancellationRequested();
-
       /* create query document */
-      var vector = new QueryDocument(query);
-      token.ThrowIfCancellationRequested();
+      var vector = new Corpus.Query(query);
 
       /* Perform final search */
-      var items = QueryDocument.Perform(corpus, vector);
-      token.ThrowIfCancellationRequested();
-    return new SearchResult(items, query);
+      var items = Corpus.Query.Perform (corpus!, vector);
+      return new SearchResult(items, query);
     }
 
 #endregion

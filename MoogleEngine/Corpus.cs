@@ -15,142 +15,120 @@
  * along with Moogle!. If not, see <http://www.gnu.org/licenses/>.
  *
  */
-using System.Collections;
 
 namespace Moogle.Engine
 {
-  public class Corpus : IEnumerable, ICollection
+  public partial class Corpus : System.Object
   {
 #region Variables
-    private Hashtable documents = new Hashtable();
-    private Hashtable idfs = new Hashtable();
+    public Dictionary<string, Word> Words {get; private set;}
+    public Dictionary<GLib.IFile, Document> Documents {get; private set;}
+
 #endregion
 
 #region API
 
-    public Document? Add(GLib.IFile file, GLib.FileInfo info, GLib.Cancellable? cancellable = null)
+    public void Add (string word, long offset, GLib.IFile from)
     {
-      var key = file.ParsedName;
-      if (documents.Contains(key))
-        return ((Document?) documents[key]);
-      else
-      {
-        var document = DocumentLoader.Load(file, info.ContentType, cancellable);
-        if (document != null)
-          documents.Add(key, document);
-        return document;
-      }
-    }
+      Document? document = null;
+      Word.Source? source = null;
+      Word? store = null;
 
-    public void Remove(Document document)
-    {
-      foreach(DictionaryEntry entry in documents)
+      do
       {
-        if(entry.Value == document)
+        if (!Documents.ContainsKey (from))
+          Documents.Add (from, new Document ());
+        else
         {
-          documents.Remove(entry.Key);
-          foreach (string word in document)
-            idfs.Remove(word);
-          return;
+          document = Documents[from];
+          if (!document.Words.ContainsKey (word))
+            document.Words.Add (word, 1);
+          else
+            document.Words[word]++;
         }
-      }
-    }
+      } while (document == null);
 
-    public void Update(GLib.Cancellable? cancellable = null)
-    {
-      List<string>? todelete = null;
-      foreach (DictionaryEntry entry in documents)
+      do
       {
-        try
+        if (!Words.ContainsKey(word))
         {
-          ((Document) entry.Value!).Update(cancellable);
+          /*
+           * Append words and deviants
+           *
+           */
 
-          if (cancellable != null
-            && cancellable.IsCancelled)
-            return;
-        }
-        catch (GLib.GException e)
-        {
-          if(e.Domain == GLib.GioGlobal.ErrorQuark()
-            && e.Code == (int) GLib.IOErrorEnum.NotFound)
+          int length = word.Length;
+          var store_ = new Word();
+          Words.Add (word, store_);
+
+          for (length -= 1; length > 1; length--)
           {
-            /* Document got deleted or otherwise unavailable */
-            if (todelete == null)
-              todelete = new List<string>();
-            todelete.Add((string) entry.Key);
+            Words.TryAdd (word.Substring (0, length), store_);
           }
         }
-      }
+        else
+        {
+          store = Words[word];
+          store.Occurrences++;
 
-      if (todelete != null)
-      {
-        foreach (string key in todelete)
-          documents.Remove(key);
-      }
+          do
+          {
+            if(!store.Locations.ContainsKey(document))
+              store.Locations.Add (document, new Word.Source ());
+            else
+            {
+              source = store.Locations[document];
+              source.Offsets.Add (offset);
+            }
+          } while (source == null);
+        }
+      } while (store == null);
     }
 
 #endregion
 
-#region ICollection
-    public int Count {
-      get {
-        return documents.Values.Count;
-      }}
-    public bool IsSynchronized {
-      get {
-        return false;
-      }}
-    public object SyncRoot {
-      get {
-        return (object) this;
-      }}
+#region Operations
 
-    public void CopyTo(Array array, int index) => documents.Values.CopyTo(array, index);
+    public static double Tf (Word word, Document document)
+    {
+      Word.Source? source;
+      if (word.Locations.TryGetValue (document, out source))
+        return Math.Log ((double) source.Offsets.Count);
+    return 0d;
+    }
+
+    public static double Tf (string word, Document document)
+    {
+      long count;
+      if (document.Words.TryGetValue(word, out count))
+        return Math.Log ((double) count) + 1d;
+    return 0d;
+    }
+
+    public static double Idf (string word, Corpus corpus)
+    {
+      Word store;
+      if(corpus.Words.TryGetValue(word, out store!))
+      {
+        decimal docs = (decimal) store.Locations.Keys.Count;
+        return Math.Log ((double) (docs / (store.Occurrences)));
+      }
+    return 0d;
+    }
+
+    public static double Tfidf (string word, Document document, Corpus corpus)
+    {
+      return Tf (word, document) * Idf (word, corpus);
+    }
 
 #endregion
 
-#region IEnumerable
+#region Constructor
 
-    public IEnumerator GetEnumerator() => documents.Values.GetEnumerator();
-
-#endregion
-
-#region TF-IDF functions
-
-    public static double Tf(string word, Document document)
+    public Corpus()
     {
-      decimal count = document[word];
-      if (count == 0)
-      {
-        return 0;
-      }
-      else
-      {
-        return Math.Log((double) (count)) + 1d;
-      }
-    }
-
-    private static double Idf_(string word, Corpus corpus)
-    {
-      /* Count wor occurrencies */
-      decimal globalCount = 0;
-      var documents = corpus.documents;
-
-      foreach (Document document in documents.Values)
-        globalCount += (document[word] != 0) ? 1 : 0;
-    return Math.Log((double) (documents.Count / (globalCount + 1)));
-    }
-
-    public static double Idf(string word, Corpus corpus)
-    {
-      if (corpus.idfs[word] != null)
-        return (double) corpus.idfs[word]!;
-      else
-      {
-        var idf = Idf_(word, corpus);
-        corpus.idfs[word] = idf;
-        return idf;
-      }
+      this.Documents = new Dictionary<GLib.IFile, Document>();
+      this.Words = new Dictionary<string, Word>();
     }
 
 #endregion

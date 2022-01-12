@@ -15,33 +15,27 @@
  * along with Moogle!. If not, see <http://www.gnu.org/licenses/>.
  *
  */
+using System.Collections;
 
 namespace Moogle.Engine
 {
-  public class SearchItem : System.Object, IComparable
+  public partial class Corpus
   {
-    public SearchItem(string title, string snippet, double score)
+    public class Document : System.Object
     {
-      this.Title = title;
-      this.Snippet = snippet;
-      this.Score = score;
-    }
+#region Variables
+      public Dictionary<string, long> Words {get; private set;}
 
-    public int CompareTo (object? object_)
-    {
-      if (object_ != null
-        && object_ is SearchItem)
+#endregion
+
+#region Constructors
+
+      public Document()
       {
-        var other = (SearchItem)object_;
-        return (Score < other.Score) ? 1 : -1;
+        this.Words = new Dictionary<string, long>();
       }
-      return 0;
+
+#endregion
     }
-
-    public string Title { get; private set; }
-
-    public string Snippet { get; private set; }
-
-    public double Score { get; private set; }
   }
 }

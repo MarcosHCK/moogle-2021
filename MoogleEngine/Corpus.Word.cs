@@ -18,30 +18,28 @@
 
 namespace Moogle.Engine
 {
-  public class SearchItem : System.Object, IComparable
+  public partial class Corpus
   {
-    public SearchItem(string title, string snippet, double score)
+    public class Word : System.Object
     {
-      this.Title = title;
-      this.Snippet = snippet;
-      this.Score = score;
-    }
+      public long Occurrences {get; set;}
+      public Dictionary<Document, Source> Locations {get; private set;}
 
-    public int CompareTo (object? object_)
-    {
-      if (object_ != null
-        && object_ is SearchItem)
+      public class Source : System.Object
       {
-        var other = (SearchItem)object_;
-        return (Score < other.Score) ? 1 : -1;
+        public List<long> Offsets {get; private set;}
+
+        public Source()
+        {
+          this.Offsets = new List<long>();
+        }
       }
-      return 0;
+
+      public Word()
+      {
+        this.Occurrences = 0;
+        this.Locations = new Dictionary<Document, Source>();
+      }
     }
-
-    public string Title { get; private set; }
-
-    public string Snippet { get; private set; }
-
-    public double Score { get; private set; }
   }
 }
