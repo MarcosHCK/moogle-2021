@@ -25,6 +25,7 @@ namespace Moogle.Engine
     {
 #region Variables
       public Dictionary<string, decimal> Words {get; private set;}
+      public double norm;
 
 #endregion
 

@@ -59,7 +59,7 @@ namespace Moogle.Engine
           *
           */
 
-          if (query.Words.ContainsKey (word))
+          if (query.Words.ContainsKey (word) == false)
           {
             double tf = Corpus.Tf (word, vector);
             double idf = Corpus.Idf (word, corpus);
@@ -75,10 +75,24 @@ namespace Moogle.Engine
       return cross / (norm1r * norm2r);
       }
 
+      private string? GetSnippet (Corpus corpus, Document vector, GLib.IFile from)
+      {
+        foreach (var word in this.Words.Keys)
+        {
+          if (corpus.Words.ContainsKey (word))
+          {
+            var store = corpus.Words[word];
+            var offset = store.Locations[vector].Offsets[0];
+            return corpus.GetSnippet (from, offset);
+          }
+        }
+      return null;
+      }
+
       public static SearchItem[] Perform(Corpus corpus, params Corpus.Query[] queries)
       {
         /* Items list */
-        var items = new List<(Corpus.Query SearchQuery, GLib.IFile Document, double Score)>();
+        var items = new List<(Corpus.Query Query, GLib.IFile Document, double Score)>();
         double max = double.MinValue;
 
         /* Calculate per-vector, similarity with corpus' documents */
@@ -137,8 +151,7 @@ namespace Moogle.Engine
           if (item.Score > ceil)
           {
             var vector = corpus.Documents[item.Document];
-            //var snippet = vector.GetSnippet ();
-            var snippet = $"score {0}";
+            var snippet = item.Query.GetSnippet (corpus, vector, item.Document);
             if(snippet == null)
               snippet = "Can't load snippet for vector";
             array[i++] = new SearchItem(item.Document.ParsedName, snippet, item.Score / max);
