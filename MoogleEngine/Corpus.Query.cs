@@ -58,8 +58,6 @@ namespace Moogle.Engine
           norm1 += tfidf1 * tfidf1;
           norm2 += tfidf2 * tfidf2;
           cross += tfidf1 * tfidf2;
-
-          Console.WriteLine ("Query word {0} has tf1 {1} tf2 {2} idf {3}", word, tf1, tf2, idf);
         }
 
         /* Calculate norm1, norm2 and cross for query words */
