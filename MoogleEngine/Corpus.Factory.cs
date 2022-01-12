@@ -23,7 +23,7 @@ namespace Moogle.Engine
   {
     private Dictionary<GLib.IFile, Loader> loaders = new Dictionary<GLib.IFile, Loader>();
 
-    public string GetSnippet (GLib.IFile file, decimal offset, int wordlen = 5, int chars_fb = 33)
+    public string GetSnippet (GLib.IFile file, long offset, int wordlen = 5, int chars_fb = 33)
     {
       if (loaders.ContainsKey (file) == false)
         throw new ArgumentException ();
@@ -35,16 +35,9 @@ namespace Moogle.Engine
       private static Dictionary<string, Type>? loaders;
       private static Type[] arglist = {typeof (GLib.IFile)};
 
-#region Abstracts
+#region Workers
 
-      [System.Serializable]
-      public sealed class LoaderNotFoundException : System.Exception
-      {
-        public LoaderNotFoundException () { }
-        public LoaderNotFoundException (string message) : base(message) { }
-      }
-
-      private async Task<bool> LoadFromImplementors (GLib.IFile file, GLib.FileInfo info, Corpus corpus)
+      private static async Task<bool> LoadFromImplementors (GLib.IFile file, GLib.FileInfo info, Corpus corpus)
       {
         var cancellable = new GLib.Cancellable();
         var token = Task.Factory.CancellationToken;
@@ -69,7 +62,7 @@ namespace Moogle.Engine
       return true;
       }
 
-      private async Task<bool> ScanFolder (GLib.IFile folder, Corpus corpus)
+      private static async Task<bool> ScanFolder (GLib.IFile folder, Corpus corpus)
       {
         var cancellable = new GLib.Cancellable();
         var token = Task.Factory.CancellationToken;
@@ -87,12 +80,8 @@ namespace Moogle.Engine
             await ScanFolder (child, corpus);
             break;
           case GLib.FileType.Regular:
-            try
-            {
-              child = folder.GetChild (info.Name);
-              await LoadFromImplementors (child, info, corpus);
-            }
-            catch (LoaderNotFoundException) { }
+            child = folder.GetChild (info.Name);
+            await LoadFromImplementors (child, info, corpus);
             break;
           }
         }
@@ -102,7 +91,7 @@ namespace Moogle.Engine
       public async Task<Corpus> FromFolder(GLib.IFile source)
       {
         var corpus = new Corpus();
-        await ScanFolder(source, corpus);
+        await ScanFolder (source, corpus);
       return corpus;
       }
 

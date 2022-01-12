@@ -21,18 +21,10 @@ namespace Moogle.Engine
 {
   public partial class Corpus
   {
-    public class Document : System.Object, IEnumerable<string>
+    public class Document : System.Object
     {
 #region Variables
-      public Dictionary<string, decimal> Words {get; private set;}
-      public double norm;
-
-#endregion
-
-#region IEnumerable
-
-      IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
-      public IEnumerator<string> GetEnumerator() => Words.Keys.GetEnumerator();
+      public Dictionary<string, long> Words {get; private set;}
 
 #endregion
 
@@ -40,7 +32,7 @@ namespace Moogle.Engine
 
       public Document()
       {
-        this.Words = new Dictionary<string, decimal>();
+        this.Words = new Dictionary<string, long>();
       }
 
 #endregion

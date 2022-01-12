@@ -22,16 +22,16 @@ namespace Moogle.Engine
   {
     public class Word : System.Object
     {
-      public decimal Occurrences {get; set;}
+      public long Occurrences {get; set;}
       public Dictionary<Document, Source> Locations {get; private set;}
 
       public class Source : System.Object
       {
-        public List<decimal> Offsets {get; private set;}
+        public List<long> Offsets {get; private set;}
 
         public Source()
         {
-          this.Offsets = new List<decimal>();
+          this.Offsets = new List<long>();
         }
       }
 

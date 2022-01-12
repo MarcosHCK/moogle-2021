@@ -24,15 +24,15 @@ namespace Moogle.Engine
   public class PlainLoader : Loader
   {
 #region Variables
-    private static readonly Regex word_pattern = new Regex ("\\w+", RegexOptions.Compiled | RegexOptions.Singleline);
-    private static readonly int bufferSize = 1024;
-    private static readonly int blockSize = 128;
+    private static readonly Regex word_pattern = new Regex ("[\\p{L}\\p{N}]+", RegexOptions.Compiled | RegexOptions.Singleline);
+    private static readonly int bufferSize = 8192;
+    private static readonly int blockSize = 2048;
 
 #endregion
 
 #region Abstracts
 
-    public override string GetSnippet (decimal offset, int wordlen, int chars_fb)
+    public override string GetSnippet (long offset, int wordlen, int chars_fb)
     {
       var token = Task.Factory.CancellationToken;
       token.ThrowIfCancellationRequested();
@@ -54,8 +54,8 @@ namespace Moogle.Engine
       double chars = (double) chars_fb;
       double size = (double) wordlen;
       double clampt = (Math.Log10(size + 1d) + 1d) * chars;
-      decimal length = (decimal) clampt;
-      decimal position = offset - (length / 2);
+      long length = (long) clampt;
+      long position = offset - (length / 2);
       if (position < 0)
         position = 0;
       var array = new char[(int) length];
@@ -68,7 +68,7 @@ namespace Moogle.Engine
 
 #region IEnumerable
 
-    public override IEnumerator<(string Word, decimal Offset)> GetEnumerator()
+    public override IEnumerator<(string Word, long Offset)> GetEnumerator()
     {
       var token = Task.Factory.CancellationToken;
       token.ThrowIfCancellationRequested();
@@ -80,7 +80,7 @@ namespace Moogle.Engine
       var stream = new StreamReader(stream_, null, true, bufferSize, false);
       var builder = new StringBuilder();
       var block = new char[blockSize];
-      var offset = (decimal) 0;
+      var offset = (long) 0;
       int read;
 
       IEnumerable<string> EmitPartial (string partial)
@@ -103,11 +103,9 @@ namespace Moogle.Engine
             break;
           }
         } while ((match = match.NextMatch ()) != null);
-
-        yield return partial;
       }
 
-      IEnumerable<(string,decimal)> EmitBlock (int read)
+      IEnumerable<(string,long)> EmitBlock (int read)
       {
         bool cr = false;
         char c;

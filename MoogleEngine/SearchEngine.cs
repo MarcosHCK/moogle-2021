@@ -24,17 +24,6 @@ namespace Moogle.Engine
     public string Source {get; private set;}
     private Corpus? corpus;
 
-    [System.Serializable]
-    public sealed class SearchEngineException : System.Exception
-    {
-      public SearchEngineException() { }
-      public SearchEngineException(string message) : base(message) { }
-      public SearchEngineException(string message, System.Exception inner) : base(message, inner) { }
-      private SearchEngineException(
-        System.Runtime.Serialization.SerializationInfo info,
-        System.Runtime.Serialization.StreamingContext context) : base(info, context) { }
-    }
-
 #endregion
 
 #region API

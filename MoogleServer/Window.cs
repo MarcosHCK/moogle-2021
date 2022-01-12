@@ -181,7 +181,15 @@ namespace Moogle.Server
 
       Task.Run(async () =>
       {
-        await engine.Preload();
+        try
+        {
+          await engine.Preload();
+        } catch(Exception e)
+        {
+          Console.Error.WriteLine (e.ToString ());
+          return;
+        }
+
         GLib.Idle.Add(() => {
           grid1!.Visible = true;
           grid1!.Sensitive = true;

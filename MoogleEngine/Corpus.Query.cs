@@ -25,7 +25,7 @@ namespace Moogle.Engine
     {
       private static readonly Regex word_pattern = new Regex("[\\^\\!\\*]*[\\w]+", RegexOptions.Compiled | RegexOptions.Singleline);
       private static Operator[]? operators;
-      private Dictionary<string, Word> Words { get; set; }
+      public Dictionary<string, Word> Words { get; private set; }
 
 #region Where the works gets done
 
@@ -35,23 +35,35 @@ namespace Moogle.Engine
         double norm1 = 0; /* || A || */  /* SQRT( SUM( Ai^2  ) ) */
         double norm2 = 0; /* || B || */  /* SQRT( SUM( Bi^2  ) ) */
         double cross = 0; /*  A * B  */  /* SQRT( SUM( Ai*Bi ) ) */
+        double tf1, tf2, idf, tfidf1, tfidf2;
 
         /* Calculate norm1, norm2 and cross for document words */
         foreach (string word in query.Words.Keys)
         {
-          double tf1 = query.Words.ContainsKey (word) ? 1d : 0d;
-          double tf2 = Corpus.Tf (word, vector);
-          double idf = Corpus.Idf (word, corpus);
-          double tfidf1 = tf1 * idf;
-          double tfidf2 = tf2 * idf;
+          tf1 = 1d;
+          tf2 = Corpus.Tf (word, vector);
+          if (tf2 == 0)
+          {
+            Corpus.Word? store;
+            if (corpus.Words.TryGetValue (word, out store))
+            {
+              tf2 = Corpus.Tf (store, vector);
+            }
+          }
+
+          idf = Corpus.Idf (word, corpus);
+          tfidf1 = tf1 * idf;
+          tfidf2 = tf2 * idf;
 
           norm1 += tfidf1 * tfidf1;
           norm2 += tfidf2 * tfidf2;
           cross += tfidf1 * tfidf2;
+
+          Console.WriteLine ("Query word {0} has tf1 {1} tf2 {2} idf {3}", word, tf1, tf2, idf);
         }
 
         /* Calculate norm1, norm2 and cross for query words */
-        foreach (string word in vector)
+        foreach (string word in vector.Words.Keys)
         {
           /*
           * Filter out the words' components we already
@@ -61,10 +73,10 @@ namespace Moogle.Engine
 
           if (query.Words.ContainsKey (word) == false)
           {
-            double tf = Corpus.Tf (word, vector);
-            double idf = Corpus.Idf (word, corpus);
-            double tfidf = tf * idf;
-            norm2 += tfidf * tfidf;
+            tf2 = Corpus.Tf (word, vector);
+            idf = Corpus.Idf (word, corpus);
+            tfidf2 = tf2 * idf;
+            norm2 += tfidf2 * tfidf2;
           }
         }
 

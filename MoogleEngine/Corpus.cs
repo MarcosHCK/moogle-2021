@@ -28,7 +28,7 @@ namespace Moogle.Engine
 
 #region API
 
-    public void Add (string word, decimal offset, GLib.IFile from)
+    public void Add (string word, long offset, GLib.IFile from)
     {
       Document? document = null;
       Word.Source? source = null;
@@ -36,7 +36,7 @@ namespace Moogle.Engine
 
       do
       {
-        if (!Documents.ContainsKey(from))
+        if (!Documents.ContainsKey (from))
           Documents.Add (from, new Document ());
         else
         {
@@ -51,7 +51,21 @@ namespace Moogle.Engine
       do
       {
         if (!Words.ContainsKey(word))
-          Words.Add (word, new Word ());
+        {
+          /*
+           * Append words and deviants
+           *
+           */
+
+          int length = word.Length;
+          var store_ = new Word();
+          Words.Add (word, store_);
+
+          for (length -= 1; length > 1; length--)
+          {
+            Words.TryAdd (word.Substring (0, length), store_);
+          }
+        }
         else
         {
           store = Words[word];
@@ -75,9 +89,17 @@ namespace Moogle.Engine
 
 #region Operations
 
+    public static double Tf (Word word, Document document)
+    {
+      Word.Source? source;
+      if (word.Locations.TryGetValue (document, out source))
+        return Math.Log ((double) source.Offsets.Count);
+    return 0d;
+    }
+
     public static double Tf (string word, Document document)
     {
-      decimal count;
+      long count;
       if (document.Words.TryGetValue(word, out count))
         return Math.Log ((double) count) + 1d;
     return 0d;

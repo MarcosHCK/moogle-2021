@@ -19,7 +19,7 @@ using System.Collections;
 
 namespace Moogle.Engine
 {
-  public abstract class Loader : System.Object, IEnumerable<(string Word, decimal Offset)>
+  public abstract class Loader : System.Object, IEnumerable<(string Word, long Offset)>
   {
     public GLib.IFile Source {get; private set;}
 
@@ -30,12 +30,12 @@ namespace Moogle.Engine
       public MimeTypeAttribute() => this.MimeType = "none";
     }
 
-    public abstract string GetSnippet (decimal offset, int wordlen, int chars_fb);
+    public abstract string GetSnippet (long offset, int wordlen, int chars_fb);
 
 #region IEnumeratable
 
     IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
-    public abstract IEnumerator<(string Word, decimal Offset)> GetEnumerator();
+    public abstract IEnumerator<(string Word, long Offset)> GetEnumerator();
 
 #endregion
 
