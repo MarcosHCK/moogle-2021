@@ -87,14 +87,36 @@ namespace Moogle.Engine
 
       private string? GetSnippet (Corpus corpus, Document vector, GLib.IFile from)
       {
-        foreach (var word in this.Words.Keys)
+        string? word = null;
+        double score = double.MinValue;
+
+        foreach (var word_ in this.Words.Keys)
         {
-          if (corpus.Words.ContainsKey (word))
+          var exists =
+          corpus.Words.ContainsKey (word_);
+          if (exists == true)
           {
-            var store = corpus.Words[word];
-            var offset = store.Locations[vector].Offsets[0];
-            return corpus.GetSnippet (from, offset);
+            var ctx = corpus.Words[word_];
+            var score_ = Corpus.Idf (word_, corpus);
+
+            exists =
+            ctx.Locations.ContainsKey (vector);
+            if (exists == true)
+            {
+              if (score_ > score)
+              {
+                score = score_;
+                word = word_;
+              }
+            }
           }
+        }
+
+        if (word != null)
+        {
+          var store = corpus.Words[word];
+          var offset = store.Locations[vector].Offsets[0];
+          return corpus.GetSnippet (from, offset);
         }
       return null;
       }
