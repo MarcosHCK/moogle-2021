@@ -105,13 +105,25 @@ namespace Moogle.Engine
     return 0d;
     }
 
-    public static double Idf (string word, Corpus corpus)
+    /*public static double Idf (string word, Corpus corpus)
     {
       Word store;
       if(corpus.Words.TryGetValue(word, out store!))
       {
         decimal docs = (decimal) store.Locations.Keys.Count;
         return Math.Log ((double) (docs / (store.Occurrences)));
+      }
+    return 0d;
+    }*/
+
+    public static double Idf (string word, Corpus corpus)
+    {
+      Word store;
+      if (corpus.Words.TryGetValue(word, out store!))
+      {
+        var docs = (decimal) corpus.Documents.Count;
+        var ocur = (decimal) store.Locations.Count;
+        return Math.Log ((double) (docs / (ocur + 1)));
       }
     return 0d;
     }

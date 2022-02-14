@@ -29,7 +29,7 @@ namespace Moogle.Engine
 
 #region Where the works gets done
 
-      public static double Similarity (Corpus.Query query, Corpus corpus, Corpus.Document vector)
+      public static double Similarity (Corpus.Query query, Corpus.Document vector, Corpus corpus)
       { /* A = this, B = vector */
         /* similarity = ( A*B / ||A|| * ||B|| ) */
         double norm1 = 0; /* || A || */  /* SQRT( SUM( Ai^2  ) ) */
@@ -136,7 +136,7 @@ namespace Moogle.Engine
             GLib.IFile key = document.Key;
 
             var score =
-            Corpus.Query.Similarity (query, corpus, vector);
+            Corpus.Query.Similarity (query, vector, corpus);
             foreach (string word in query.Words.Keys)
             {
               var counter = query.Words[word];
