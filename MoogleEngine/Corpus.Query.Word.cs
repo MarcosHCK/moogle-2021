@@ -24,8 +24,15 @@ namespace Moogle.Engine
     {
       public class Word
       {
-        public decimal Occurrences;
+        public long Occurrences { get; set; }
+        public List<int> Offsets { get; private set; }
         public Operator.Filter? Filter;
+
+        public Word ()
+        {
+          this.Offsets = new List<int>();
+          this.Occurrences = 1;
+        }
       }
     }
   }

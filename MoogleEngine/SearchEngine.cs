@@ -42,8 +42,11 @@ namespace Moogle.Engine
       var vector = new Corpus.Query(query);
 
       /* Perform final search */
-      var items = Corpus.Query.Perform (corpus!, vector);
-      return new SearchResult(items, query);
+      var tuple =
+      Corpus.Query.Perform (corpus!, vector);
+      var items = tuple.Item1;
+      var suggestion = tuple.Item2;
+      return new SearchResult(items, suggestion ?? "");
     }
 
 #endregion

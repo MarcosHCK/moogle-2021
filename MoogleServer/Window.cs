@@ -20,7 +20,7 @@ using Moogle.Engine;
 
 namespace Moogle.Server
 {
-  [GLib.TypeName("MoogleServerWindow")]
+  [GLib.TypeName ("MoogleServerWindow")]
   [Gtk.Template (ResourceName = "Window.ui")]
   public class Window : Gtk.Window
   {
@@ -38,9 +38,13 @@ namespace Moogle.Server
     [GtkChild]
     private Gtk.Image? image1 = null;
     [GtkChild]
+    private Gtk.Label? label1 = null;
+    [GtkChild]
     private Gtk.Spinner? spinner1 = null;
     [GtkChild]
     private Gtk.ListBox? listbox1 = null;
+    [GtkChild]
+    private Gtk.Revealer? revealer1 = null;
     [GtkChild]
     private Gtk.SearchEntry? searchentry1 = null;
 
@@ -48,12 +52,12 @@ namespace Moogle.Server
 
 #region Workers
 
-    private void CleanListbox()
+    private void CleanListbox ()
     {
       foreach (var child in listbox1!.Children)
       {
-        listbox1!.Remove(child);
-        child.Destroy();
+        listbox1!.Remove (child);
+        child.Destroy ();
       }
     }
 
@@ -61,14 +65,19 @@ namespace Moogle.Server
 
 #region Signals
 
-    private void OnSearchCompleted(SearchResult result)
+    private void OnSuggestionClose (object? widget, System.EventArgs args)
+    {
+      revealer1!.RevealChild = false;
+    }
+
+    private void OnSearchCompleted (SearchResult result)
     {
       /* Clean previous search's entries */
-      CleanListbox();
+      CleanListbox ();
 
       /* Update progress and setup a timeout */
       searchentry1!.ProgressFraction = 1f;
-      GLib.Timeout.Add(500, () =>
+      GLib.Timeout.Add (500, () =>
       {
         searchentry1!.ProgressFraction = 0f;
         return false;
@@ -77,25 +86,34 @@ namespace Moogle.Server
       /* Append new search results */
       foreach (SearchItem item in result)
       {
-        var entry = new SearchEntry(item.Title, item.Snippet);
-        listbox1!.Add(entry);
-        entry.Show();
+        var entry = new SearchEntry (item.Title, item.Snippet);
+        listbox1!.Add (entry);
+        entry.Show ();
+      }
+
+      var suggest =
+      result.Suggestion;
+      if (suggest != "")
+      {
+        label1!.Text = suggest;
+        revealer1!.RevealChild = true;
       }
     }
 
-    private void OnSearchChanged(object? widget, System.EventArgs args)
+    private void OnSearchChanged (object? widget, System.EventArgs args)
     {
       var text = searchentry1!.Text;
       if (text != "")
       {
         searchentry1!.ProgressFraction = 0.2f;
-        query.Start((token) =>
+        revealer1!.RevealChild = false;
+        query.Start ((token) =>
         {
           var result =
-          engine.Query(text);
-          token.ThrowIfCancellationRequested();
-          GLib.Idle.Add(() => {
-            OnSearchCompleted(result);
+          engine.Query (text);
+          token.ThrowIfCancellationRequested ();
+          GLib.Idle.Add (() => {
+            OnSearchCompleted (result);
             return false;
           });
         });
@@ -103,17 +121,17 @@ namespace Moogle.Server
       else
       {
         searchentry1!.ProgressFraction = 0f;
-        CleanListbox();
+        CleanListbox ();
       }
     }
 
-    private void OnSearchStop(object? widget, System.EventArgs args)
+    private void OnSearchStop (object? widget, System.EventArgs args)
     {
       searchentry1!.ProgressFraction = 0f;
-      query.Stop();
+      query.Stop ();
     }
 
-    private void OnAbout(object? widget, System.EventArgs args)
+    private void OnAbout (object? widget, System.EventArgs args)
     {
       if(About == null)
       {
@@ -136,28 +154,28 @@ namespace Moogle.Server
         about.WrapLicense = true;
 
         var logoname = $"{this.Application.ApplicationId}.svg";
-        var pixbuf = new Gdk.Pixbuf(typeof(Window).Assembly, logoname);
+        var pixbuf = new Gdk.Pixbuf (typeof (Window).Assembly, logoname);
         about.Logo = pixbuf;
 
         about.DeleteEvent +=
         (Gtk.DeleteEventHandler)
         ((widget, args) =>
         {
-          ((Gtk.Widget) widget).Hide();
+          ((Gtk.Widget) widget).Hide ();
           args.RetVal = false;
         });
       }
 
-      About.Run();
-      About.Hide();
+      About.Run ();
+      About.Hide ();
     }
 
-    private void OnNotifyIcon(object? widget, GLib.NotifyArgs args)
+    private void OnNotifyIcon (object? widget, GLib.NotifyArgs args)
     {
       Gdk.Pixbuf? current = this.Icon;
-      if(current != null)
+      if (current != null)
       {
-        var pixbuf = current.ScaleSimple(16, 16, Gdk.InterpType.Bilinear);
+        var pixbuf = current.ScaleSimple (16, 16, Gdk.InterpType.Bilinear);
         this.image1!.Pixbuf = pixbuf;
       }
     }
@@ -166,31 +184,31 @@ namespace Moogle.Server
 
 #region Constructors
 
-    public Window() : this(false) {}
-    private Window(bool re) : base(null)
+    public Window () : this (false) {}
+    private Window (bool re) : base (null)
     {
-      (new Gtk.TemplateBuilder()).InitTemplate(this);
-      this.engine = new SearchEngine("./Content/");
-      this.query = new AsyncQuery();
+      (new Gtk.TemplateBuilder ()).InitTemplate (this);
+      this.engine = new SearchEngine ("./Content/");
+      this.query = new AsyncQuery ();
 
-      this.AddNotification("icon", OnNotifyIcon);
+      this.AddNotification ("icon", OnNotifyIcon);
 
       spinner1!.Visible = true;
       grid1!.Sensitive = false;
       grid1!.Visible = false;
 
-      Task.Run(async () =>
+      Task.Run (async () =>
       {
         try
         {
-          await engine.Preload();
-        } catch(Exception e)
+          await engine.Preload ();
+        } catch (Exception e)
         {
           Console.Error.WriteLine (e.ToString ());
           return;
         }
 
-        GLib.Idle.Add(() => {
+        GLib.Idle.Add (() => {
           grid1!.Visible = true;
           grid1!.Sensitive = true;
           spinner1!.Visible = false;

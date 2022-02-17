@@ -19,8 +19,8 @@ using GtkChild = Gtk.Builder.ObjectAttribute;
 
 namespace Moogle.Server
 {
-  [GLib.TypeName("MoogleServerSearchEntry")]
-  [Gtk.Template(ResourceName = "SearchEntry.ui")]
+  [GLib.TypeName ("MoogleServerSearchEntry")]
+  [Gtk.Template (ResourceName = "SearchEntry.ui")]
   public class SearchEntry : Gtk.Grid
   {
     [GtkChild]
@@ -43,15 +43,15 @@ namespace Moogle.Server
         label2!.Text = value;
       }}
 
-    public SearchEntry(string Title, string Snippet) : this(false)
+    public SearchEntry (string Title, string Snippet) : this(false)
     {
       this.Title = Title;
       this.Snippet = Snippet;
     }
 
-    private SearchEntry(bool re) : base()
+    private SearchEntry (bool re) : base()
     {
-      (new Gtk.TemplateBuilder()).InitTemplate(this);
+      (new Gtk.TemplateBuilder ()).InitTemplate (this);
     }
   }
 }

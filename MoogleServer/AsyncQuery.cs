@@ -32,7 +32,7 @@ namespace Moogle.Server
 
 #region API
 
-    public void Start(QueryAction action)
+    public void Start (QueryAction action)
     {
       lock (this)
       {
@@ -42,42 +42,42 @@ namespace Moogle.Server
           {
             var
             token = source.Token;
-            task = new Task(() => action(token), token);
-            task.Start();
+            task = new Task(() => action (token), token);
+            task.Start ();
           }
           else
           {
-            StopUnlocked();
+            StopUnlocked ();
           }
         }
         while (task == null);
       }
     }
 
-    private void StopUnlocked()
+    private void StopUnlocked ()
     {
       if (task != null)
       {
         try
         {
-          source.Cancel();
-          task.Wait(source.Token);
+          source.Cancel ();
+          task.Wait (source.Token);
         } catch (OperationCanceledException) { }
 
         task = null;
 
-        if (source.TryReset() == false)
+        if (source.TryReset () == false)
         {
           source = new CancellationTokenSource();
         }
       }
     }
 
-    public void Stop()
+    public void Stop ()
     {
       lock (this)
       {
-        StopUnlocked();
+        StopUnlocked ();
       }
     }
 
@@ -85,7 +85,7 @@ namespace Moogle.Server
 
 #region Constructors
 
-    public AsyncQuery()
+    public AsyncQuery ()
     {
       this.source = new CancellationTokenSource();
     }

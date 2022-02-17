@@ -58,7 +58,7 @@ namespace Moogle.Engine
            */
 
           int length = word.Length;
-          var store_ = new Word();
+          var store_ = new Word (word);
           Words.Add (word, store_);
 
           for (length -= 1; length > 1; length--)
@@ -73,7 +73,7 @@ namespace Moogle.Engine
 
           do
           {
-            if(!store.Locations.ContainsKey(document))
+            if(!store.Locations.ContainsKey (document))
               store.Locations.Add (document, new Word.Source ());
             else
             {
@@ -103,6 +103,11 @@ namespace Moogle.Engine
       if (document.Words.TryGetValue(word, out count))
         return Math.Log ((double) count) + 1d;
     return 0d;
+    }
+
+    public static double Tf (long occurrences)
+    {
+      return Math.Log ((double) occurrences) + 1d;
     }
 
     /*public static double Idf (string word, Corpus corpus)

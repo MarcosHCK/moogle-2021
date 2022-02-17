@@ -27,10 +27,11 @@ namespace Moogle.Engine
       private static Operator[]? operators;
       private static Regex? word_pattern;
       public Dictionary<string, Word> Words { get; private set; }
+      public string? OriginalQuery { get; private set; }
 
 #region Where the works gets done
 
-      public static double Similarity (Corpus.Query query, Corpus.Document vector, Corpus corpus)
+      public static double Similarity (Corpus.Query query, Corpus.Document vector, Corpus corpus, Morph morph)
       { /* A = this, B = vector */
         /* similarity = ( A*B / ||A|| * ||B|| ) */
         double norm1 = 0; /* || A || */  /* SQRT( SUM( Ai^2  ) ) */
@@ -48,6 +49,7 @@ namespace Moogle.Engine
             Corpus.Word? store;
             if (corpus.Words.TryGetValue (word, out store))
             {
+              morph.Alternative (query.Words[word], word, store.Self);
               tf2 = Corpus.Tf (store, vector);
             }
           }
@@ -122,10 +124,10 @@ namespace Moogle.Engine
       return null;
       }
 
-      public static SearchItem[] Perform (Corpus corpus, params Corpus.Query[] queries)
+      public static (SearchItem[], string?) Perform (Corpus corpus, params Corpus.Query[] queries)
       {
         /* Items list */
-        var items = new List<(Corpus.Query Query, GLib.IFile Document, double Score)>();
+        var items = new List<(Corpus.Query Query, Morph Morph, GLib.IFile Document, double Score)>();
         double max = double.MinValue;
 
         /* Calculate per-vector, similarity with corpus' documents */
@@ -133,11 +135,12 @@ namespace Moogle.Engine
         {
           foreach (var document in corpus.Documents)
           {
+            var morph = new Morph (query.OriginalQuery!);
             Corpus.Document vector = document.Value;
             GLib.IFile key = document.Key;
 
             var score =
-            Corpus.Query.Similarity (query, vector, corpus);
+            Corpus.Query.Similarity (query, vector, corpus, morph);
             foreach (string word in query.Words.Keys)
             {
               var counter = query.Words[word];
@@ -146,7 +149,7 @@ namespace Moogle.Engine
                 score = filter (query, corpus, vector, score);
             }
 
-            items.Add ((query, key, score));
+            items.Add ((query, morph, key, score));
 
             /* Take biggest score */
             if (score > max)
@@ -155,9 +158,7 @@ namespace Moogle.Engine
         }
 
         if (0 >= max)
-        {
-          return new SearchItem[0];
-        }
+          return (new SearchItem[0], null);
 
         /*
         * Copy to output array
@@ -177,23 +178,35 @@ namespace Moogle.Engine
         }
 
         array = new SearchItem[elements];
+        double bestmorphd = double.MinValue;
+        Morph? bestmorph = null;
 
         /* create entries */
         foreach (var item in items)
         {
           if (item.Score > ceil)
           {
+            var score = item.Score / max;
             var vector = corpus.Documents[item.Document];
             var snippet = item.Query.GetSnippet (corpus, vector, item.Document);
             if (snippet == null)
               snippet = "Can't load snippet for vector";
-            array[i++] = new SearchItem (item.Document.ParsedName, snippet, item.Score / max);
+            array[i++] = new SearchItem (item.Document.ParsedName, snippet, score);
+
+            if (score > bestmorphd)
+            {
+              bestmorphd = score;
+              bestmorph = item.Morph;
+            }
           }
         }
 
         /* Sort array */
         Array.Sort<SearchItem>(array);
-      return array;
+        string? suggestion = null;
+        if (bestmorph != null)
+          suggestion = bestmorph.Suggestion;
+      return (array, suggestion);
       }
 
 #endregion
@@ -218,23 +231,6 @@ namespace Moogle.Engine
       return (null,null);
       }
 
-      private static Operator.Filter? EndCapture (ref Operator.Capture? context)
-      {
-        foreach (var operator_ in operators!)
-        {
-          Operator.Capture? context_ = context;
-          Operator.Filter? value = null;
-
-          value =
-          operator_.EndCapture (ref context_);
-          if (value != null)
-          {
-            return value;
-          }
-        }
-      return null;
-      }
-
 #endregion
 
 #region Constructors
@@ -245,7 +241,7 @@ namespace Moogle.Engine
         public override Filter? EndCapture (ref Capture? context) => null;
       }
 
-      public Query ()
+      private Query ()
       {
         if (operators == null)
         {
@@ -285,15 +281,18 @@ namespace Moogle.Engine
           word_pattern = new Regex (pattern.ToString (), flags);
         }
 
+        OriginalQuery = null;
         Words = new Dictionary<string, Word> ();
       }
 
       public Query (string query) : this ()
       {
-        var match =
-        word_pattern!.Match (query);
-        var first = match;
+        Match match, first;
         Word counter;
+
+        OriginalQuery = query;
+        match = word_pattern!.Match (query);
+        first = match;
         
         do
         {
@@ -321,6 +320,8 @@ namespace Moogle.Engine
                 Words.Add (word, new Word());
                 counter = Words[word];
               }
+
+              counter.Offsets.Add (match.Index);
 
               filter =
               operator_!.EndCapture (ref capture);

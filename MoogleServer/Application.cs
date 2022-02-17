@@ -30,14 +30,14 @@ namespace Moogle.Server
 
 #region GLib.IInitable
 
-    public bool Init(GLib.Cancellable? cancellable = null)
+    public bool Init (GLib.Cancellable? cancellable = null)
     {
       /*
        * Initialize application core
        *
        */
 
-      Gtk.Application.Init();
+      Gtk.Application.Init ();
 
       /*
        * Settings default icon
@@ -45,7 +45,7 @@ namespace Moogle.Server
        */
 
       var iconname = $"{this.ApplicationId}.icon.svg";
-      var pixbuf = new Gdk.Pixbuf(typeof(Application).Assembly, iconname);
+      var pixbuf = new Gdk.Pixbuf (typeof (Application).Assembly, iconname);
       Gtk.Window.DefaultIcon = pixbuf;
       this.logo = pixbuf;
     return true;
@@ -55,7 +55,7 @@ namespace Moogle.Server
 
 #region  GLib.Application
 
-    protected override void OnActivated()
+    protected override void OnActivated ()
     {
       /*
       * Initialize
@@ -64,12 +64,12 @@ namespace Moogle.Server
 
       try
       {
-        this.Init();
+        this.Init ();
       }
       catch (Exception e)
       {
-        Console.Error.WriteLine(e);
-        ((GLib.Application) this).Quit();
+        Console.Error.WriteLine (e);
+        ((GLib.Application) this).Quit ();
       }
 
       /*
@@ -77,28 +77,28 @@ namespace Moogle.Server
       *
       */
 
-      var window = new Moogle.Server.Window();
-      this.AddWindow(window);
+      var window = new Moogle.Server.Window ();
+      this.AddWindow (window);
       window.Icon = this.logo;
-      window.Present();
+      window.Present ();
     }
 
 #endregion
 
 #region Constructors
 
-    public Application() : base(null, GLib.ApplicationFlags.None) {}
-    public Application(string application_id, GLib.ApplicationFlags flags) : base(application_id, flags) {}
+    public Application () : base(null, GLib.ApplicationFlags.None) {}
+    public Application (string application_id, GLib.ApplicationFlags flags) : base (application_id, flags) {}
 
 #endregion
 
 #region Program entry point
 
     [STAThread]
-    public static int Main(string[] argv)
+    public static int Main (string[] argv)
     {
-      var app = new Moogle.Server.Application("org.hck.moogle", GLib.ApplicationFlags.None);
-    return app.Run(ApplicationName, argv);
+      var app = new Moogle.Server.Application ("org.hck.moogle", GLib.ApplicationFlags.None);
+    return app.Run (ApplicationName, argv);
     }
 #endregion
   }

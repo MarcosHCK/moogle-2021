@@ -22,8 +22,10 @@ namespace Moogle.Engine
   {
     public class Word : System.Object
     {
-      public long Occurrences {get; set;}
-      public Dictionary<Document, Source> Locations {get; private set;}
+      public string Self { get; private set; }
+      public long Occurrences { get; set; }
+      public Dictionary<Document, Source> Locations { get; private set; }
+
 
       public class Source : System.Object
       {
@@ -35,10 +37,11 @@ namespace Moogle.Engine
         }
       }
 
-      public Word()
+      public Word(string self)
       {
         this.Occurrences = 0;
         this.Locations = new Dictionary<Document, Source>();
+        this.Self = self;
       }
     }
   }
