@@ -30,10 +30,10 @@ namespace Moogle.Engine
           public string instance = "";
         }
 
-        public delegate double Filter(object query, Corpus corpus, Corpus.Document vector, double score);
+        public delegate double Filter (object query, Corpus corpus, Corpus.Document vector, double score);
 
-        public abstract string? BeginCapture(ref Capture? context, Match first, Match current);
-        public abstract Filter? EndCapture(ref Capture? context);
+        public abstract string? BeginCapture (ref Capture? context, Match first, Match current);
+        public abstract Filter? EndCapture (ref Capture? context);
       }
     }
   }

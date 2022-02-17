@@ -23,7 +23,7 @@ namespace Moogle.Engine
   {
     public partial class Query
     {
-      private static readonly Regex word_pattern = new Regex("[\\^\\!\\*]*[\\w]+", RegexOptions.Compiled | RegexOptions.Singleline);
+      private static readonly Regex word_pattern = new Regex ("[\\^\\!\\*]*[\\w]+", RegexOptions.Compiled | RegexOptions.Singleline);
       private static Operator[]? operators;
       public Dictionary<string, Word> Words { get; private set; }
 
@@ -121,7 +121,7 @@ namespace Moogle.Engine
       return null;
       }
 
-      public static SearchItem[] Perform(Corpus corpus, params Corpus.Query[] queries)
+      public static SearchItem[] Perform (Corpus corpus, params Corpus.Query[] queries)
       {
         /* Items list */
         var items = new List<(Corpus.Query Query, GLib.IFile Document, double Score)>();
@@ -142,10 +142,10 @@ namespace Moogle.Engine
               var counter = query.Words[word];
               var filter = counter.Filter;
               if (filter != null)
-                score = filter(query, corpus, vector, score);
+                score = filter (query, corpus, vector, score);
             }
 
-            items.Add((query, key, score));
+            items.Add ((query, key, score));
 
             /* Take biggest score */
             if (score > max)
@@ -184,9 +184,9 @@ namespace Moogle.Engine
           {
             var vector = corpus.Documents[item.Document];
             var snippet = item.Query.GetSnippet (corpus, vector, item.Document);
-            if(snippet == null)
+            if (snippet == null)
               snippet = "Can't load snippet for vector";
-            array[i++] = new SearchItem(item.Document.ParsedName, snippet, item.Score / max);
+            array[i++] = new SearchItem (item.Document.ParsedName, snippet, item.Score / max);
           }
         }
 
@@ -253,7 +253,7 @@ namespace Moogle.Engine
           var operator_list = new List<Operator>();
 
           foreach (Type type in list)
-          if(type != typeof(FallbackOperator))
+          if (type != typeof(FallbackOperator))
             {
               var object_ = Activator.CreateInstance (type);
               operator_list.Add ((Operator) object_!);

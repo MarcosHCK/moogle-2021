@@ -28,15 +28,15 @@ namespace Moogle.Engine
 
 #region API
 
-    public async Task<bool> Preload()
+    public async Task<bool> Preload ()
     {
       var folder = GLib.FileFactory.NewForPath (Source);
-      var loader = new Corpus.Factory (typeof(SearchEngine).Assembly);
-      corpus = await loader.FromFolder(folder);
+      var loader = new Corpus.Factory (typeof (SearchEngine).Assembly);
+      corpus = await loader.FromFolder (folder);
     return true;
     }
 
-    public SearchResult Query(string query)
+    public SearchResult Query (string query)
     {
       /* create query document */
       var vector = new Corpus.Query(query);
@@ -50,8 +50,8 @@ namespace Moogle.Engine
 
 #region Constructors
 
-    public SearchEngine() : this(".") {}
-    public SearchEngine(string source) => this.Source = source;
+    public SearchEngine () : this(".") {}
+    public SearchEngine (string source) => this.Source = source;
 #endregion
   }
 }

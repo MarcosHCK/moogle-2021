@@ -25,14 +25,14 @@ namespace Moogle.Engine
     {
       public class MustExistsOperator : Operator
       {
-        public override string? BeginCapture(ref Capture? context, Match first, Match current)
+        public override string? BeginCapture (ref Capture? context, Match first, Match current)
         {
           context = null;
           string word = current.Value;
 
           if (word[0] == '^')
           {
-            word = word.Substring(1);
+            word = word.Substring (1);
 
             Capture
             context_ = new Capture();
@@ -43,11 +43,11 @@ namespace Moogle.Engine
           return null;
         }
 
-        public override Filter? EndCapture(ref Capture? context)
+        public override Filter? EndCapture (ref Capture? context)
         {
           if (context != null)
           {
-            string word = ((Capture)context!).instance;
+            string word = ((Capture) context!).instance;
             return (query, corpus, vector, score) =>
             {
               if (vector.Words.ContainsKey (word) == true)

@@ -20,7 +20,7 @@ namespace Moogle.Engine
 {
   public class SearchItem : System.Object, IComparable
   {
-    public SearchItem(string title, string snippet, double score)
+    public SearchItem (string title, string snippet, double score)
     {
       this.Title = title;
       this.Snippet = snippet;
@@ -32,7 +32,7 @@ namespace Moogle.Engine
       if (object_ != null
         && object_ is SearchItem)
       {
-        var other = (SearchItem)object_;
+        var other = (SearchItem) object_;
         return (Score < other.Score) ? 1 : -1;
       }
       return 0;

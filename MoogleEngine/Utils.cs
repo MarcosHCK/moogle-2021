@@ -21,18 +21,18 @@ namespace Moogle.Engine
 {
   public static class Utils
   {
-    public static List<Type> GetImplementors(Type super, params Assembly[] assemblies)
+    public static List<Type> GetImplementors (Type super, params Assembly[] assemblies)
     {
-      if(assemblies.Length == 0)
+      if (assemblies.Length == 0)
         assemblies = new Assembly[] {super.Assembly};
 
-      var types = new List<Type>();
+      var types = new List<Type> ();
       foreach (Assembly assembly in assemblies)
       {
-        foreach (var type in assembly.GetTypes())
+        foreach (var type in assembly.GetTypes ())
         {
-          if (type.IsSubclassOf(super) == true)
-            types.Add(type);
+          if (type.IsSubclassOf (super) == true)
+            types.Add (type);
         }
       }
     return types;

@@ -23,25 +23,25 @@ namespace Moogle.Engine
   {
     public GLib.IFile Source {get; private set;}
 
-    [System.AttributeUsage(System.AttributeTargets.Class, Inherited = false, AllowMultiple = true)]
+    [System.AttributeUsage (System.AttributeTargets.Class, Inherited = false, AllowMultiple = true)]
     public sealed class MimeTypeAttribute : System.Attribute
     {
       public string MimeType {get; set;}
-      public MimeTypeAttribute() => this.MimeType = "none";
+      public MimeTypeAttribute () => this.MimeType = "none";
     }
 
     public abstract string GetSnippet (long offset, int wordlen, int chars_fb);
 
 #region IEnumeratable
 
-    IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
-    public abstract IEnumerator<(string Word, long Offset)> GetEnumerator();
+    IEnumerator IEnumerable.GetEnumerator () => GetEnumerator ();
+    public abstract IEnumerator<(string Word, long Offset)> GetEnumerator ();
 
 #endregion
 
 #region Constructors
 
-    public Loader(GLib.IFile source)
+    public Loader (GLib.IFile source)
     {
       this.Source = source;
     }

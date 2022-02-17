@@ -39,10 +39,6 @@ namespace Moogle.Engine
 
       private static async Task<bool> LoadFromImplementors (GLib.IFile file, GLib.FileInfo info, Corpus corpus)
       {
-        var cancellable = new GLib.Cancellable();
-        var token = Task.Factory.CancellationToken;
-        token.Register(() => cancellable.Cancel());
-
         if (loaders!.ContainsKey (info.ContentType) == false)
           return false;
         var type = loaders![info.ContentType];
@@ -88,7 +84,7 @@ namespace Moogle.Engine
       return true;
       }
 
-      public async Task<Corpus> FromFolder(GLib.IFile source)
+      public async Task<Corpus> FromFolder (GLib.IFile source)
       {
         var corpus = new Corpus();
         await ScanFolder (source, corpus);

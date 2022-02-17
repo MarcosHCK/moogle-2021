@@ -30,7 +30,7 @@ namespace Moogle.Engine
           public int importance;
         }
 
-        public override string? BeginCapture(ref Capture? context, Match first, Match current)
+        public override string? BeginCapture (ref Capture? context, Match first, Match current)
         {
           context = null;
           string word = current.Value;
@@ -40,8 +40,8 @@ namespace Moogle.Engine
             int i, exp = 1;
             for (i = 1; i < word.Length && word[i] == '*'; i++)
               exp++;
-            word = word.Substring(exp);
-            Console.WriteLine($"word {word}");
+            word = word.Substring (exp);
+            Console.WriteLine ($"word {word}");
 
             var
             context_ = new MoreCapture();
@@ -53,7 +53,7 @@ namespace Moogle.Engine
           return null;
         }
 
-        public override Filter? EndCapture(ref Capture? context)
+        public override Filter? EndCapture (ref Capture? context)
         {
           throw new NotImplementedException();
         }

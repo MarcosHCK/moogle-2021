@@ -34,12 +34,7 @@ namespace Moogle.Engine
 
     public override string GetSnippet (long offset, int wordlen, int chars_fb)
     {
-      var token = Task.Factory.CancellationToken;
-      token.ThrowIfCancellationRequested();
-      var cancellable = new GLib.Cancellable();
-      token.Register(() => cancellable.Cancel());
-
-      var stream__ = Source.Read(cancellable);
+      var stream__ = Source.Read(null);
       var stream_ = new GLib.GioStream(stream__);
       var stream = new StreamReader(stream_, null, true, bufferSize, false);
 
@@ -53,14 +48,14 @@ namespace Moogle.Engine
 
       double chars = (double) chars_fb;
       double size = (double) wordlen;
-      double clampt = (Math.Log10(size + 1d) + 1d) * chars;
+      double clampt = (Math.Log10 (size + 1d) + 1d) * chars;
       long length = (long) clampt;
       long position = offset - (length / 2);
       if (position < 0)
         position = 0;
       var array = new char[(int) length];
-      stream_.Seek((long) position, SeekOrigin.Begin);
-      stream.ReadBlock(array, 0, array.Length);
+      stream_.Seek ((long) position, SeekOrigin.Begin);
+      stream.ReadBlock (array, 0, array.Length);
     return new string(array);
     }
 
@@ -68,17 +63,16 @@ namespace Moogle.Engine
 
 #region IEnumerable
 
-    public override IEnumerator<(string Word, long Offset)> GetEnumerator()
+    public override IEnumerator<(string Word, long Offset)> GetEnumerator ()
     {
       var token = Task.Factory.CancellationToken;
       token.ThrowIfCancellationRequested();
       var cancellable = new GLib.Cancellable();
-      token.Register(() => cancellable.Cancel());
 
-      var stream__ = Source.Read(cancellable);
-      var stream_ = new GLib.GioStream(stream__);
-      var stream = new StreamReader(stream_, null, true, bufferSize, false);
-      var builder = new StringBuilder();
+      var stream__ = Source.Read (cancellable);
+      var stream_ = new GLib.GioStream (stream__);
+      var stream = new StreamReader (stream_, null, true, bufferSize, false);
+      var builder = new StringBuilder ();
       var block = new char[blockSize];
       var offset = (long) 0;
       int read;
@@ -111,10 +105,10 @@ namespace Moogle.Engine
         char c;
         int i;
 
-        for(i = 0; i < read; i++)
+        for (i = 0; i < read; i++)
         {
           offset +=
-          stream.CurrentEncoding.GetByteCount(block, i, 1);
+          stream.CurrentEncoding.GetByteCount (block, i, 1);
           c = block[i];
 
           switch (c)
@@ -171,7 +165,7 @@ namespace Moogle.Engine
 #endregion
 
 #region Constructors
-    public PlainLoader(GLib.IFile source) : base(source) { }
+    public PlainLoader (GLib.IFile source) : base (source) { }
 #endregion
   }
 }

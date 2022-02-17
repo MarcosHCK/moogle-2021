@@ -42,23 +42,23 @@ namespace Moogle.Engine
         return (object) this;
       }}
 
-    public void CopyTo(Array array, int index) => items.CopyTo(array, index);
+    public void CopyTo (Array array, int index) => items.CopyTo (array, index);
 
 #endregion
 
 #region IEnumerable
 
-    public IEnumerator GetEnumerator() => items.GetEnumerator();
+    public IEnumerator GetEnumerator () => items.GetEnumerator ();
 
 #endregion
 
 #region Constructors
 
-    public SearchResult() : this(new SearchItem[0]) {}
-    public SearchResult(SearchItem[]? items, string suggestion = "")
+    public SearchResult () : this (new SearchItem[0]) {}
+    public SearchResult (SearchItem[]? items, string suggestion = "")
     {
       if (items == null)
-        throw new ArgumentNullException("items");
+        throw new ArgumentNullException ("items");
       this.Suggestion = suggestion;
       this.items = items;
     }
