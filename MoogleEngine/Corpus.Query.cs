@@ -16,6 +16,7 @@
  *
  */
 using System.Text.RegularExpressions;
+using System.Text;
 
 namespace Moogle.Engine
 {
@@ -23,8 +24,8 @@ namespace Moogle.Engine
   {
     public partial class Query
     {
-      private static readonly Regex word_pattern = new Regex ("[\\^\\!\\*]*[\\w]+", RegexOptions.Compiled | RegexOptions.Singleline);
       private static Operator[]? operators;
+      private static Regex? word_pattern;
       public Dictionary<string, Word> Words { get; private set; }
 
 #region Where the works gets done
@@ -246,30 +247,51 @@ namespace Moogle.Engine
 
       public Query ()
       {
-        Words = new Dictionary<string, Word> ();
         if (operators == null)
         {
           var list = Utils.GetImplementors (typeof(Operator));
           var operator_list = new List<Operator>();
+          var pattern = new StringBuilder ();
 
           foreach (Type type in list)
-          if (type != typeof(FallbackOperator))
             {
-              var object_ = Activator.CreateInstance (type);
-              operator_list.Add ((Operator) object_!);
+              if (type != typeof(FallbackOperator))
+                {
+                  var object_ = Activator.CreateInstance (type);
+                  operator_list.Add ((Operator) object_!);
+                }
+
+              var attributes =
+              type.GetCustomAttributes (typeof (Operator.GlyphAttribute), false);
+              foreach (var attribute in attributes)
+                {
+                  var attr = (Operator.GlyphAttribute) attribute;
+                  pattern.AppendFormat ("\\{0}", attr.Glyph);
+                }
             }
 
           operator_list.Add (new FallbackOperator());
-
           operators = new Operator[operator_list.Count];
           operator_list.CopyTo (0, operators, 0, operators.Length);
+
+          if (operator_list.Count > 1)
+            {
+              pattern.Insert (0, "[");
+              pattern.Append ("]*");
+            }
+          pattern.Append ("[\\w]+");
+
+          var flags = RegexOptions.Compiled | RegexOptions.Singleline;
+          word_pattern = new Regex (pattern.ToString (), flags);
         }
+
+        Words = new Dictionary<string, Word> ();
       }
 
       public Query (string query) : this ()
       {
         var match =
-        word_pattern.Match (query);
+        word_pattern!.Match (query);
         var first = match;
         Word counter;
         

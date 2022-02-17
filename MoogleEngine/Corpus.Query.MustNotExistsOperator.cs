@@ -23,6 +23,7 @@ namespace Moogle.Engine
   {
     public partial class Query
     {
+      [Operator.Glyph (Glyph = '!')]
       public class MustNotExistsOperator : Operator
       {
         public override string? BeginCapture (ref Capture? context, Match first, Match current)

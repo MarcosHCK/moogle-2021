@@ -15,26 +15,16 @@
  * along with Moogle!. If not, see <http://www.gnu.org/licenses/>.
  *
  */
-using System.Text.RegularExpressions;
 
 namespace Moogle.Engine
 {
-  public partial class Corpus
+  public abstract partial class Loader
   {
-    public partial class Query
+    [System.AttributeUsage (System.AttributeTargets.Class, Inherited = false, AllowMultiple = true)]
+    public sealed class MimeTypeAttribute : System.Attribute
     {
-      public abstract partial class Operator
-      {
-        public class Capture
-        {
-          public string instance = "";
-        }
-
-        public delegate double Filter (object query, Corpus corpus, Corpus.Document vector, double score);
-
-        public abstract string? BeginCapture (ref Capture? context, Match first, Match current);
-        public abstract Filter? EndCapture (ref Capture? context);
-      }
+      public string MimeType {get; set;}
+      public MimeTypeAttribute () => this.MimeType = "none";
     }
   }
 }

@@ -23,6 +23,7 @@ namespace Moogle.Engine
   {
     public partial class Query
     {
+      [Operator.Glyph (Glyph = '*')]
       public class ImportanceOperator : Operator
       {
         private class MoreCapture : Operator.Capture
@@ -41,7 +42,6 @@ namespace Moogle.Engine
             for (i = 1; i < word.Length && word[i] == '*'; i++)
               exp++;
             word = word.Substring (exp);
-            Console.WriteLine ($"word {word}");
 
             var
             context_ = new MoreCapture();
@@ -55,7 +55,22 @@ namespace Moogle.Engine
 
         public override Filter? EndCapture (ref Capture? context)
         {
-          throw new NotImplementedException();
+          if (context != null)
+          {
+            var word = ((Capture) context!).instance;
+            var reps = ((MoreCapture) context!).importance;
+            return (query, corpus, vector, score) =>
+            {
+              if (vector.Words.ContainsKey (word))
+                {
+                  var idf = Corpus.Idf (word, corpus);
+                  for (int i = 0; i < reps; i++)
+                    score *= idf;
+                }
+              return score;
+            };
+          }
+          return null;
         }
       }
     }

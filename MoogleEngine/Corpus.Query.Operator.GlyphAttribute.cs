@@ -15,7 +15,6 @@
  * along with Moogle!. If not, see <http://www.gnu.org/licenses/>.
  *
  */
-using System.Text.RegularExpressions;
 
 namespace Moogle.Engine
 {
@@ -25,15 +24,12 @@ namespace Moogle.Engine
     {
       public abstract partial class Operator
       {
-        public class Capture
+        [System.AttributeUsage (System.AttributeTargets.Class, Inherited = false, AllowMultiple = false)]
+        public sealed class GlyphAttribute : System.Attribute
         {
-          public string instance = "";
+          public char Glyph {get; set;}
+          public GlyphAttribute () => this.Glyph = '?';
         }
-
-        public delegate double Filter (object query, Corpus corpus, Corpus.Document vector, double score);
-
-        public abstract string? BeginCapture (ref Capture? context, Match first, Match current);
-        public abstract Filter? EndCapture (ref Capture? context);
       }
     }
   }

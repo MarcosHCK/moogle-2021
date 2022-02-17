@@ -19,16 +19,9 @@ using System.Collections;
 
 namespace Moogle.Engine
 {
-  public abstract class Loader : System.Object, IEnumerable<(string Word, long Offset)>
+  public abstract partial class Loader : System.Object, IEnumerable<(string Word, long Offset)>
   {
     public GLib.IFile Source {get; private set;}
-
-    [System.AttributeUsage (System.AttributeTargets.Class, Inherited = false, AllowMultiple = true)]
-    public sealed class MimeTypeAttribute : System.Attribute
-    {
-      public string MimeType {get; set;}
-      public MimeTypeAttribute () => this.MimeType = "none";
-    }
 
     public abstract string GetSnippet (long offset, int wordlen, int chars_fb);
 
