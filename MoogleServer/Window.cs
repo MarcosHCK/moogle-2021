@@ -29,9 +29,9 @@ namespace Moogle.Server
     private SearchEngine engine;
     private AsyncQuery query;
 
-    #endregion
+#endregion
 
-    #region Template childs
+#region Template childs
 
     [GtkChild]
     private Gtk.Grid? grid1 = null;
@@ -68,6 +68,11 @@ namespace Moogle.Server
     private void OnSuggestionClose (object? widget, System.EventArgs args)
     {
       revealer1!.RevealChild = false;
+    }
+
+    private void OnGoSuggestion (object? widget, Gtk.ActivateLinkArgs args)
+    {
+      searchentry1!.Text = label1!.Text;
     }
 
     private void OnSearchCompleted (SearchResult result)
@@ -107,12 +112,13 @@ namespace Moogle.Server
       {
         searchentry1!.ProgressFraction = 0.2f;
         revealer1!.RevealChild = false;
+
         query.Start ((token) =>
         {
-          var result =
-          engine.Query (text);
-          token.ThrowIfCancellationRequested ();
-          GLib.Idle.Add (() => {
+          SearchResult? result;
+          result = engine.Query (text);
+          GLib.Idle.Add (() =>
+          {
             OnSearchCompleted (result);
             return false;
           });

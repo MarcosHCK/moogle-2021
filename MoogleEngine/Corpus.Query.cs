@@ -203,6 +203,8 @@ namespace Moogle.Engine
 
         /* Sort array */
         Array.Sort<SearchItem>(array);
+
+        /* Extract best suggestion */
         string? suggestion = null;
         if (bestmorph != null)
           suggestion = bestmorph.Suggestion;
@@ -247,6 +249,8 @@ namespace Moogle.Engine
         {
           var list = Utils.GetImplementors (typeof(Operator));
           var operator_list = new List<Operator>();
+          var pattern_married = new StringBuilder ();
+          var pattern_single = new StringBuilder ();
           var pattern = new StringBuilder ();
 
           foreach (Type type in list)
@@ -262,7 +266,10 @@ namespace Moogle.Engine
               foreach (var attribute in attributes)
                 {
                   var attr = (Operator.GlyphAttribute) attribute;
-                  pattern.AppendFormat ("\\{0}", attr.Glyph);
+                  if (!attr.Single)
+                    pattern_married.AppendFormat ("\\{0}", attr.Glyph);
+                  else
+                    pattern_single.AppendFormat ("\\{0}", attr.Glyph);
                 }
             }
 
@@ -272,10 +279,20 @@ namespace Moogle.Engine
 
           if (operator_list.Count > 1)
             {
-              pattern.Insert (0, "[");
+              var pttern =
+              pattern_married.ToString ();
+              pattern.Append ("[");
+              pattern.Append (pttern);
               pattern.Append ("]*");
             }
-          pattern.Append ("[\\w]+");
+            {
+              var pttern =
+              pattern_single.ToString ();
+              pattern.Append ("[");
+              pattern.Append (pttern);
+              pattern.Append ("\\p{L}\\p{N}");
+              pattern.Append ("]+");
+            }
 
           var flags = RegexOptions.Compiled | RegexOptions.Singleline;
           word_pattern = new Regex (pattern.ToString (), flags);

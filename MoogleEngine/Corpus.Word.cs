@@ -29,7 +29,7 @@ namespace Moogle.Engine
 
       public class Source : System.Object
       {
-        public List<long> Offsets {get; private set;}
+        public List<long> Offsets { get; private set; }
 
         public Source()
         {

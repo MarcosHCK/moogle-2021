@@ -18,24 +18,14 @@
 
 namespace Moogle.Engine
 {
-  public partial class Corpus
+  public partial class SearchEngine
   {
-    public partial class Query
+    [System.Serializable]
+    public sealed class Exception : System.Exception
     {
-      public abstract partial class Operator
-      {
-        [System.AttributeUsage (System.AttributeTargets.Class, Inherited = false, AllowMultiple = false)]
-        public sealed class GlyphAttribute : System.Attribute
-        {
-          public char Glyph { get; set; }
-          public bool Single { get;set; }
-          public GlyphAttribute ()
-          {
-            this.Glyph = '?';
-            this.Single = false;
-          }
-        }
-      }
+      public Exception() { }
+      public Exception(string message) : base(message) { }
+      public Exception(string message, System.Exception inner) : base(message, inner) { }
     }
   }
 }

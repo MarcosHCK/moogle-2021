@@ -18,7 +18,7 @@
 
 namespace Moogle.Engine
 {
-  public class SearchEngine
+  public partial class SearchEngine
   {
 #region Variables
     public string Source {get; private set;}
