@@ -75,6 +75,7 @@ namespace Moogle.Engine
             context_ = new MoreCapture ();
             context_.instance = one.Value;
             context_.other = two.Value;
+            context_.emit = false;
             context = context_;
             return word;
           }

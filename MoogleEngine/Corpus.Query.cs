@@ -226,7 +226,14 @@ namespace Moogle.Engine
 
       public class FallbackOperator : Operator
       {
-        public override string? BeginCapture (ref Capture? context, Match first, Match current) => current.Value;
+        private static readonly Capture __default__ = new Capture ();
+
+        public override string? BeginCapture (ref Capture? context, Match first, Match current)
+        {
+          context = __default__;
+          return current.Value;
+        }
+
         public override Filter? EndCapture (ref Capture? context) => null;
       }
 
@@ -292,7 +299,7 @@ namespace Moogle.Engine
       public Query (string query) : this ()
       {
         Match match, first;
-        Word counter;
+        Word? counter = null;
 
         OriginalQuery = query;
         match = word_pattern!.Match (query);
@@ -314,24 +321,30 @@ namespace Moogle.Engine
 
             if (word != null)
             {
-              if (Words.ContainsKey (word))
+              if (capture!.emit)
               {
-                counter = Words[word]!;
-                counter.Occurrences++;
-              }
-              else
-              {
-                Words.Add (word, new Word());
-                counter = Words[word];
-              }
+                if (Words.ContainsKey (word))
+                {
+                  counter = Words[word]!;
+                  counter.Occurrences++;
+                }
+                else
+                {
+                  Words.Add (word, new Word());
+                  counter = Words[word];
+                }
 
-              counter.Offsets.Add (match.Index);
+                counter.Offsets.Add (match.Index);
+              }
 
               filter =
               operator_!.EndCapture (ref capture);
               if (filter != null)
               {
-                counter.Filter = filter;
+                if (counter != null)
+                {
+                  counter.Filter = filter;
+                }
               }
             }
           }

@@ -28,6 +28,7 @@ namespace Moogle.Engine
         public class Capture
         {
           public string instance = "";
+          public bool emit = true;
         }
 
         public delegate double Filter (object query, Corpus corpus, Corpus.Document vector, double score);
