@@ -38,13 +38,13 @@ namespace Moogle.Server
     [GtkChild]
     private Gtk.Image? image1 = null;
     [GtkChild]
-    private Gtk.Label? label1 = null;
-    [GtkChild]
     private Gtk.Spinner? spinner1 = null;
     [GtkChild]
     private Gtk.ListBox? listbox1 = null;
     [GtkChild]
     private Gtk.Revealer? revealer1 = null;
+    [GtkChild]
+    private Gtk.ModelButton? modelbutton1 = null;
     [GtkChild]
     private Gtk.SearchEntry? searchentry1 = null;
 
@@ -70,9 +70,9 @@ namespace Moogle.Server
       revealer1!.RevealChild = false;
     }
 
-    private void OnGoSuggestion (object? widget, Gtk.ActivateLinkArgs args)
+    private void OnGoSuggestion (object? widget, System.EventArgs args)
     {
-      searchentry1!.Text = label1!.Text;
+      searchentry1!.Text = modelbutton1!.Text;
     }
 
     private void OnSearchCompleted (SearchResult result)
@@ -100,7 +100,7 @@ namespace Moogle.Server
       result.Suggestion;
       if (suggest != "")
       {
-        label1!.Text = suggest;
+        modelbutton1!.Text = suggest;
         revealer1!.RevealChild = true;
       }
     }
@@ -199,6 +199,8 @@ namespace Moogle.Server
 
       this.AddNotification ("icon", OnNotifyIcon);
 
+      revealer1!.RevealChild = false;
+      modelbutton1!.Text = "(null)";
       spinner1!.Visible = true;
       grid1!.Sensitive = false;
       grid1!.Visible = false;

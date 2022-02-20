@@ -134,10 +134,12 @@ Author: MarcosHCK
                           </packing>
                         </child>
                         <child>
-                          <object class="GtkLabel" id="label1">
+                          <object class="GtkModelButton" id="modelbutton1">
                             <property name="visible">True</property>
-                            <property name="can-focus">False</property>
+                            <property name="can-focus">True</property>
+                            <property name="receives-default">True</property>
                             <property name="hexpand">True</property>
+                            <signal name="clicked" handler="OnGoSuggestion" object="MoogleServerWindow" swapped="no"/>
                           </object>
                           <packing>
                             <property name="left-attach">0</property>
