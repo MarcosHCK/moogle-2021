@@ -40,10 +40,12 @@ namespace Moogle.Engine
         double tf1, tf2, idf, tfidf1, tfidf2;
 
         /* Calculate norm1, norm2 and cross for document words */
-        foreach (string word in query.Words.Keys)
+        foreach (var word_ in query.Words)
         {
-          tf1 = 1d;
+          var word = word_.Key;
+          tf1 = Corpus.Tf (word_.Value.Occurrences);
           tf2 = Corpus.Tf (word, vector);
+
           if (tf2 == 0)
           {
             Corpus.Word? store;
@@ -51,36 +53,26 @@ namespace Moogle.Engine
             {
               morph.Alternative (query.Words[word], word, store.Self);
               tf2 = Corpus.Tf (store, vector);
+              idf = Corpus.Idf (store, corpus);
+            }
+            else
+            {
+              idf = 0;
             }
           }
+          else
+          {
+            idf = Corpus.Idf (word, corpus);
+          }
 
-          idf = Corpus.Idf (word, corpus);
           tfidf1 = tf1 * idf;
           tfidf2 = tf2 * idf;
 
           norm1 += tfidf1 * tfidf1;
-          norm2 += tfidf2 * tfidf2;
           cross += tfidf1 * tfidf2;
         }
 
-        /* Calculate norm1, norm2 and cross for query words */
-        foreach (string word in vector.Words.Keys)
-        {
-          /*
-          * Filter out the words' components we already
-          * calculated earlier 
-          *
-          */
-
-          if (query.Words.ContainsKey (word) == false)
-          {
-            tf2 = Corpus.Tf (word, vector);
-            idf = Corpus.Idf (word, corpus);
-            tfidf2 = tf2 * idf;
-            norm2 += tfidf2 * tfidf2;
-          }
-        }
-
+        norm2 = vector.Norm;
         double norm1r = Math.Sqrt (norm1);
         double norm2r = Math.Sqrt (norm2);
         if (norm1r == 0 || norm2r == 0)

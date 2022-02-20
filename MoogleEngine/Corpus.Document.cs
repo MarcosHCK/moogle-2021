@@ -24,7 +24,8 @@ namespace Moogle.Engine
     public class Document : System.Object
     {
 #region Variables
-      public Dictionary<string, long> Words {get; private set;}
+      public Dictionary<string, long> Words { get; private set; }
+      public double Norm { get; set; }
 
 #endregion
 

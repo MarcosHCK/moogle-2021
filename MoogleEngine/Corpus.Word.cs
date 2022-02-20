@@ -26,7 +26,6 @@ namespace Moogle.Engine
       public long Occurrences { get; set; }
       public Dictionary<Document, Source> Locations { get; private set; }
 
-
       public class Source : System.Object
       {
         public List<long> Offsets { get; private set; }

@@ -85,6 +85,23 @@ namespace Moogle.Engine
       } while (store == null);
     }
 
+    public void Postprocess ()
+    {
+      foreach (var vector in Documents.Values)
+      {
+        var norm = 0d;
+        foreach (var word in vector.Words.Keys)
+        {
+          var tf = Corpus.Tf (word, vector);
+          var idf = Corpus.Idf (word, this);
+          var tfidf = tf * idf;
+          norm += tfidf * tfidf;
+        }
+
+        vector.Norm = Math.Sqrt (norm);
+      }
+    }
+
 #endregion
 
 #region Operations
@@ -110,16 +127,12 @@ namespace Moogle.Engine
       return Math.Log ((double) occurrences) + 1d;
     }
 
-    /*public static double Idf (string word, Corpus corpus)
+    public static double Idf (Word word, Corpus corpus)
     {
-      Word store;
-      if(corpus.Words.TryGetValue(word, out store!))
-      {
-        decimal docs = (decimal) store.Locations.Keys.Count;
-        return Math.Log ((double) (docs / (store.Occurrences)));
-      }
-    return 0d;
-    }*/
+      var docs = (decimal) corpus.Documents.Count;
+      var ocur = (decimal) word.Locations.Count;
+      return Math.Log ((double) (docs / ocur));
+    }
 
     public static double Idf (string word, Corpus corpus)
     {
@@ -128,7 +141,7 @@ namespace Moogle.Engine
       {
         var docs = (decimal) corpus.Documents.Count;
         var ocur = (decimal) store.Locations.Count;
-        return Math.Log ((double) (docs / (ocur + 1)));
+        return Math.Log ((double) (docs / ocur));
       }
     return 0d;
     }

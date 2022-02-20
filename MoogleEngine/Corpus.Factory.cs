@@ -88,6 +88,7 @@ namespace Moogle.Engine
       {
         var corpus = new Corpus();
         await ScanFolder (source, corpus);
+        corpus.Postprocess ();
       return corpus;
       }
 
