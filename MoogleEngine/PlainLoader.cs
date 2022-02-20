@@ -25,6 +25,7 @@ namespace Moogle.Engine
   {
 #region Variables
     private static readonly Regex word_pattern = new Regex ("[\\p{L}\\p{N}]+", RegexOptions.Compiled | RegexOptions.Singleline);
+    private static readonly Regex subst_pattern = new Regex ("[^.]", RegexOptions.Compiled | RegexOptions.Singleline);
     private static readonly int bufferSize = 8192;
     private static readonly int blockSize = 2048;
 
@@ -37,6 +38,7 @@ namespace Moogle.Engine
       var stream__ = Source.Read(null);
       var stream_ = new GLib.GioStream(stream__);
       var stream = new StreamReader(stream_, null, true, bufferSize, false);
+      long i;
 
       /*
        * Seek some bytes before
@@ -56,7 +58,13 @@ namespace Moogle.Engine
       var array = new char[(int) length];
       stream_.Seek ((long) position, SeekOrigin.Begin);
       stream.ReadBlock (array, 0, array.Length);
-    return new string(array);
+
+      for (i = 0; i < length; i++)
+      if (Char.IsControl (array[i]))
+        {
+          array[i] = '.';
+        }
+    return new string (array);
     }
 
 #endregion

@@ -40,7 +40,7 @@ namespace Moogle.Server
         return label2!.Text;
       }
       set {
-        label2!.Text = value;
+        label2!.Markup = value;
       }}
 
     public SearchEntry (string Title, string Snippet) : this(false)
@@ -52,6 +52,7 @@ namespace Moogle.Server
     private SearchEntry (bool re) : base()
     {
       (new Gtk.TemplateBuilder ()).InitTemplate (this);
+      this.label2!.UseMarkup = true;
     }
   }
 }

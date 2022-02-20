@@ -82,38 +82,33 @@ namespace Moogle.Engine
 
       private string? GetSnippet (Corpus corpus, Document vector, GLib.IFile from)
       {
-        string? word = null;
-        double score = double.MinValue;
-
-        foreach (var word_ in this.Words.Keys)
+        var builder = new StringBuilder ();
+        var havenot = new StringBuilder ();
+        foreach (var word in this.Words.Keys)
         {
           var exists =
-          corpus.Words.ContainsKey (word_);
+          vector.Words.ContainsKey (word);
           if (exists == true)
           {
-            var ctx = corpus.Words[word_];
-            var score_ = Corpus.Idf (word_, corpus);
-
-            exists =
-            ctx.Locations.ContainsKey (vector);
-            if (exists == true)
-            {
-              if (score_ > score)
-              {
-                score = score_;
-                word = word_;
-              }
-            }
+            var store = corpus.Words[word];
+            var offset = store.Locations[vector].Offsets[0];
+            var snippet = corpus.GetSnippet(from, offset);
+            var esc = GLib.Markup.EscapeText (snippet);
+            builder.AppendFormat ("<span>{0}</span>", esc);
+            builder.AppendLine ();
+          }
+          else
+          {
+            var esc = GLib.Markup.EscapeText (word);
+            if (havenot.Length != 0)
+              havenot.Append (' ');
+            havenot.AppendFormat ("<s>{0}</s>", esc);
           }
         }
 
-        if (word != null)
-        {
-          var store = corpus.Words[word];
-          var offset = store.Locations[vector].Offsets[0];
-          return corpus.GetSnippet (from, offset);
-        }
-      return null;
+        var havenot_ = havenot.ToString ();
+        builder.AppendLine (havenot_);
+      return builder.ToString ();
       }
 
       public static (SearchItem[], string?) Perform (Corpus corpus, params Corpus.Query[] queries)
