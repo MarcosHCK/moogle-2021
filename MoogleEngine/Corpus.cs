@@ -59,7 +59,10 @@ namespace Moogle.Engine
 
           int length = word.Length;
           var store_ = new Word (word);
+          var lower = word.ToLower ();
+
           Words.Add (word, store_);
+          Words.TryAdd (lower, store_);
 
           for (length -= 1; length > 1; length--)
           {

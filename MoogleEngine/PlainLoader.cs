@@ -94,11 +94,7 @@ namespace Moogle.Engine
           if (match.Success == true)
           {
             string word = match.Value;
-            string lower = word.ToLower ();
-
             yield return word;
-            if (word != lower)
-              yield return lower;
           }
           else
           {

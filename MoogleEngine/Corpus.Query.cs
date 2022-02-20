@@ -26,10 +26,76 @@ namespace Moogle.Engine
     {
       private static Operator[]? operators;
       private static Regex? word_pattern;
+      private static int[,]? levenshtein_matrix = null;
       public Dictionary<string, Word> Words { get; private set; }
       public string? OriginalQuery { get; private set; }
 
 #region Where the works gets done
+
+      public static int Levenshtein (string word1, string word2)
+      {
+        var matrix = levenshtein_matrix;
+        var length1 = word1.Length + 1;
+        var length2 = word2.Length + 1;
+        int minimun = 0;
+        int i, j;
+
+        if (matrix == null || (
+              matrix.GetLength (0) < length1
+            || matrix.GetLength (1) < length2))
+          {
+            levenshtein_matrix = new int[length1, length2];
+            matrix = levenshtein_matrix;
+          }
+
+        for (i = 1; i < length1; i++)
+          matrix[i, 0] = i;
+        for (i = 1; i < length2; i++)
+          matrix[0, i] = i;
+        matrix[0, 0] = 0;
+
+        for (i = 1; i < length1; i++)
+          for (j = 1; j < length2; j++)
+          {
+            if (word1[i - 1] == word2[j - 1])
+            {
+              matrix[i, j] = matrix[i - 1, j - 1];
+            }
+            else
+            {
+              minimun = Math.Min (matrix[i - 1, j], matrix[i, j - 1]);
+              minimun = Math.Min (matrix[i - 1, j - 1], minimun) + 1;
+              matrix[i, j] = minimun;
+            }
+          }
+
+        minimun = matrix[length1 - 1, length2 - 1];
+      return minimun;
+      }
+
+      private static string? ClosetWord (string target, Corpus.Document vector)
+      {
+        var length = target.Length;
+        long closet = long.MaxValue;
+        string? closer = null;
+
+        foreach (var word in vector.Words.Keys)
+        {
+          var distance =
+          Math.Abs (word.Length - length);
+          if (distance < 3)
+          {
+            distance =
+            Levenshtein (word, target);
+            if (distance < closet)
+            {
+              closet = distance;
+              closer = word;
+            }
+          }
+        }
+      return closer;
+      }
 
       public static double Similarity (Corpus.Query query, Corpus.Document vector, Corpus corpus, Morph morph)
       { /* A = this, B = vector */
@@ -51,13 +117,24 @@ namespace Moogle.Engine
             Corpus.Word? store;
             if (corpus.Words.TryGetValue (word, out store))
             {
-              morph.Alternative (query.Words[word], word, store.Self);
+              morph.Alternative (query, word, store.Self);
               tf2 = Corpus.Tf (store, vector);
               idf = Corpus.Idf (store, corpus);
             }
             else
             {
-              idf = 0;
+              var closer =
+              ClosetWord (word, vector);
+              if (closer != null)
+              {
+                morph.Alternative (query, word, closer);
+                tf2 = Corpus.Tf (closer, vector);
+                idf = Corpus.Idf (closer, corpus);
+              }
+              else
+              {
+                idf = 0;
+              }
             }
           }
           else

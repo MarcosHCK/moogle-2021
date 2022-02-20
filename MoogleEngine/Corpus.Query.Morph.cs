@@ -46,9 +46,10 @@ namespace Moogle.Engine
           }
         }
 
-        public void Alternative (Word alternative, string altern, string word)
+        public void Alternative (Query query_, string altern, string word)
         {
-          var offsets = alternative.Offsets;
+          var store = query_.Words[altern];
+          var offsets = store.Offsets;
           var text = query.ToString ();
           int i;
 

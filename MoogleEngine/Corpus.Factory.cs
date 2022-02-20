@@ -77,6 +77,7 @@ namespace Moogle.Engine
             break;
           case GLib.FileType.Regular:
             child = folder.GetChild (info.Name);
+            if (child.Basename != ".gitignore")
             await LoadFromImplementors (child, info, corpus);
             break;
           }
