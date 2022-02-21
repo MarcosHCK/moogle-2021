@@ -16,6 +16,7 @@
  *
  */
 using System.Reflection;
+using System.Threading;
 
 namespace Moogle.Engine
 {
@@ -37,25 +38,26 @@ namespace Moogle.Engine
 
 #region Workers
 
-      private static async Task<bool> LoadFromImplementors (GLib.IFile file, GLib.FileInfo info, Corpus corpus)
+      private static void LoadFromImplementors (GLib.IFile file, GLib.FileInfo info, Corpus corpus)
       {
         if (loaders!.ContainsKey (info.ContentType) == false)
-          return false;
+          return;
+
         var type = loaders![info.ContentType];
         var ctor = type.GetConstructor (arglist);
         var loader_ = ctor!.Invoke ( new object[] {file} );
         var loader = (Loader) loader_;
 
-        await Task.Run (() =>
-        {
-          corpus.loaders.Add (file, loader);
+        lock (loaders)
+          {
+            corpus.loaders.Add (file, loader);
+          }
 
-          foreach (var tuple in loader)
+        foreach (var tuple in loader)
+          lock (corpus)
           {
             corpus.Add (tuple.Word, tuple.Offset, file);
           }
-        });
-      return true;
       }
 
       private static async Task<bool> ScanFolder (GLib.IFile folder, Corpus corpus)
@@ -64,6 +66,7 @@ namespace Moogle.Engine
         var token = Task.Factory.CancellationToken;
         token.Register(() => cancellable.Cancel());
         GLib.IFile child;
+        long hold = 0;
 
         var enumerator =
         folder.EnumerateChildren("standard::name,standard::content-type", 0, cancellable);
@@ -78,10 +81,21 @@ namespace Moogle.Engine
           case GLib.FileType.Regular:
             child = folder.GetChild (info.Name);
             if (child.Basename != ".gitignore")
-            await LoadFromImplementors (child, info, corpus);
+              {
+                Interlocked.Increment (ref hold);
+                ThreadPool.QueueUserWorkItem ((state) =>
+                {
+                  var tuple = ((GLib.IFile, GLib.FileInfo)) state!;
+                  LoadFromImplementors (tuple.Item1, tuple.Item2, corpus);
+                  Interlocked.Decrement (ref hold);
+                }, (child, info));
+              }
             break;
           }
         }
+
+        SpinWait.SpinUntil (() =>
+          Interlocked.Read (ref hold) == 0);
       return true;
       }
 

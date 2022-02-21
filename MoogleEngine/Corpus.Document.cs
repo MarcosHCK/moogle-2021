@@ -15,7 +15,6 @@
  * along with Moogle!. If not, see <http://www.gnu.org/licenses/>.
  *
  */
-using System.Collections;
 
 namespace Moogle.Engine
 {
