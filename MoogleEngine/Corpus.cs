@@ -64,10 +64,10 @@ namespace Moogle.Engine
           Words.Add (word, store_);
           Words.TryAdd (lower, store_);
 
-          for (length -= 1; length > 1; length--)
-          {
-            Words.TryAdd (word.Substring (0, length), store_);
-          }
+          for (length -= 1; length > 3; length--)
+            {
+              Words.TryAdd (word.Substring (0, length), store_);
+            }
         }
         else
         {
@@ -90,18 +90,47 @@ namespace Moogle.Engine
 
     public void Postprocess ()
     {
+      {
+        /*
+         * If this list is pointless to you
+         * remember it is pointless for me
+         * too. C# shoud include a method to
+         * remove a key from a dictionary
+         * mid-iteraration
+         *
+         */
+        var toclean = new List<string>();
+
+        foreach (var word in Words.Keys)
+          {
+            var store = Words[word];
+            var idf = Corpus.Idf (store, this);
+            if (idf == (double) 0)
+              {
+                toclean.Add (word);
+              }
+          }
+        foreach (var word in toclean)
+          {
+            var store = Words[word];
+            foreach (var vector in store.Locations.Keys)
+              vector.Words.Remove (word);
+            Words.Remove (word);
+          }
+      }
+
       foreach (var vector in Documents.Values)
       {
-        var norm = 0d;
+        var partial = 0d;
         foreach (var word in vector.Words.Keys)
         {
           var tf = Corpus.Tf (word, vector);
           var idf = Corpus.Idf (word, this);
           var tfidf = tf * idf;
-          norm += tfidf * tfidf;
+          partial += tfidf * tfidf;
         }
 
-        vector.Norm = Math.Sqrt (norm);
+        vector.Norm = Math.Sqrt (partial);
       }
     }
 
