@@ -45,6 +45,10 @@ Cuando se realiza una búsqueda llamando al método `SearchEngine`.`Query()`, es
 
 Elegí usar una interfaz gráfica (GUI) basada en `GTK+` porque esta es bastante más rápida que la interfaz web que el proyecto posee, pero esta no es totalmente necesaria, por los sientase en su derecho de remplazarla por la variante web, o cualquier otra. La única concesión necesaria para usar la interfaz basada en `GTK+` fue implementar la búsqueda y la carga de forma **asíncrona**, aunque de ninguna forma esto debe convertirse en un inconveniente para otras interfaces.
 
+### Dependencias extras
+
+Como GTK+ no es nativo para la plataforma .NET es necesario instalar cirtos paquetes en la distribución donde se pruebe (también si se usan las assemblies, pero no si se usan los wrappers nativos), si se prueba en una sistema UNIX-like, para Windows no se como proceder. Al menos en mi distro el paquete se llama `libgtk-dotnet3.0-cil`, y en general será algo como `libgtk-<sharp|dotnet>-<version>-cli`.
+
 ## Extensibilidad y mantenibilidad
 
 Desde el inicio mi proyecto fue desarrollado con la extensibilidad en mente. El motor de búsqueda (en la classlib `MoogleEngine`) es completamente modular y sus componentes están bien delimitados, por lo que cualquier parte de esta puede ser modificada e incluso suprimida. Además, su diseño jerárquico posibilita la implementación de nuevos `cargadores`, implementando un tipo derivado de la clase `Loader` y anotado con el tipo `MIME` que soporta usando el atributo `Loader`.`MimeTypeAttribute`, o de operadores adicionales derivando de `Corpus`.`Query`.`Operator` y anotando con el atributo `Corpus`.`Query`.`Operator`.`GlyphAttribute`.
